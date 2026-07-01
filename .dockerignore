@@ -1,0 +1,13 @@
+_legacy_nextjs
+frontend
+node_modules
+.next
+.git
+.venv
+**/.venv
+**/__pycache__
+**/*.pyc
+backend/logs
+backend/.venv
+.DS_Store
+tsconfig.tsbuildinfo

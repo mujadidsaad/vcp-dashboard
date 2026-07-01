@@ -1,36 +1,48 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-.yarn/install-state.gz
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
+# macOS
 .DS_Store
-*.pem
 
-# debug
+# Node / npm (root and any subfolder)
+node_modules/
+**/node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
-.env*.local
+# Vite / build outputs
+frontend/dist/
+**/dist/
+*.tsbuildinfo
 
-# vercel
+# Vercel
 .vercel
 
-# typescript
-*.tsbuildinfo
+# Legacy Next.js artefacts (only /_legacy_nextjs source is tracked)
+.next/
+_legacy_nextjs/.next/
 next-env.d.ts
+
+# Python
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.Python
+.venv/
+**/.venv/
+venv/
+env/
+
+# Logs
+backend/logs/
+*.log
+
+# Local env
+.env
+.env.local
+.env.*.local
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
