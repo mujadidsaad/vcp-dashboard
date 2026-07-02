@@ -14,11 +14,20 @@ export function passesRvol(rvol: number | undefined, mode: RvolFilter | undefine
   // Missing / zero RVOL considered "unknown" -> exclude when a strict filter is applied
   if (rvol === undefined || rvol === null || Number.isNaN(rvol) || rvol <= 0) return false;
   switch (mode) {
-    case 'lt1': return rvol < 1;
-    case 'lt2': return rvol < 2;
-    case 'lt3': return rvol < 3;
-    case 'gt3': return rvol > 3;
-    default:    return true;
+    // "less than" buckets
+    case 'lt1':    return rvol < 1;
+    case 'lt2':    return rvol < 2;
+    case 'lt3':    return rvol < 3;
+    // "greater than / equal" thresholds
+    case 'gte1':   return rvol >= 1.0;
+    case 'gte1_5': return rvol >= 1.5;
+    case 'gte2':   return rvol >= 2.0;
+    case 'gte2_5': return rvol >= 2.5;
+    case 'gte3':   return rvol >= 3.0;
+    case 'gte5':   return rvol >= 5.0;
+    // legacy option (kept working for old saved configs)
+    case 'gt3':    return rvol > 3;
+    default:       return true;
   }
 }
 

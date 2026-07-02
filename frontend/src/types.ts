@@ -36,7 +36,11 @@ export interface VCPResult {
   reason: string;
 }
 
-export type RvolFilter = 'any' | 'lt1' | 'lt2' | 'lt3' | 'gt3';
+export type RvolFilter =
+  | 'any'
+  | 'lt1' | 'lt2' | 'lt3'
+  | 'gte1' | 'gte1_5' | 'gte2' | 'gte2_5' | 'gte3' | 'gte5'
+  | 'gt3';   // legacy alias – kept so old configs keep working
 
 export interface CheckConfig {
   enabled: boolean;

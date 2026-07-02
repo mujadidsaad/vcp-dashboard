@@ -121,11 +121,20 @@ export default function FilterPanel(p: Props) {
           onChange={e => p.onFilters({ ...c, rvolFilter: e.target.value as RvolFilter })}
           className="w-full h-9 px-2.5 rounded-md bg-white/[0.03] border border-white/10 text-[12px] text-white focus:outline-none focus:border-accent/50"
         >
-          <option value="any" className="bg-bg text-white">Any RVOL</option>
-          <option value="lt1"  className="bg-bg text-white">RVOL &lt; 1</option>
-          <option value="lt2"  className="bg-bg text-white">RVOL &lt; 2</option>
-          <option value="lt3"  className="bg-bg text-white">RVOL &lt; 3</option>
-          <option value="gt3"  className="bg-bg text-white">RVOL &gt; 3</option>
+          <option value="any"    className="bg-bg text-white">Any RVOL</option>
+          <optgroup label="Below-average volume">
+            <option value="lt1"  className="bg-bg text-white">RVOL &lt; 1 (Below Average)</option>
+            <option value="lt2"  className="bg-bg text-white">RVOL &lt; 2</option>
+            <option value="lt3"  className="bg-bg text-white">RVOL &lt; 3</option>
+          </optgroup>
+          <optgroup label="Above-average volume (≥)">
+            <option value="gte1"   className="bg-bg text-white">RVOL ≥ 1.0 (Normal Volume)</option>
+            <option value="gte1_5" className="bg-bg text-white">RVOL ≥ 1.5 (Above Average)</option>
+            <option value="gte2"   className="bg-bg text-white">RVOL ≥ 2.0 (Strong Momentum)</option>
+            <option value="gte2_5" className="bg-bg text-white">RVOL ≥ 2.5 (High Momentum)</option>
+            <option value="gte3"   className="bg-bg text-white">RVOL ≥ 3.0 (Very High Momentum)</option>
+            <option value="gte5"   className="bg-bg text-white">RVOL ≥ 5.0 (Exceptional Volume)</option>
+          </optgroup>
         </select>
       </Section>
 
