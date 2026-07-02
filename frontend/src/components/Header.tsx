@@ -1,8 +1,19 @@
+export type Tab = 'vcp' | 'rvol' | 'watchlist' | 'analytics';
+
 interface Props {
   totalStocks: number;
+  activeTab: Tab;
+  onTabChange: (t: Tab) => void;
 }
 
-export default function Header({ totalStocks }: Props) {
+const TABS: Array<{ id: Tab; label: string; enabled: boolean }> = [
+  { id: 'vcp',       label: 'VCP Screener',   enabled: true  },
+  { id: 'rvol',      label: 'RVOL Screener',  enabled: true  },
+  { id: 'watchlist', label: 'Watchlist',      enabled: false },
+  { id: 'analytics', label: 'Analytics',      enabled: false },
+];
+
+export default function Header({ totalStocks, activeTab, onTabChange }: Props) {
   return (
     <header className="border-b border-white/5">
       <div className="mx-auto max-w-[1400px] px-6 py-4 flex items-center gap-6">
@@ -21,17 +32,31 @@ export default function Header({ totalStocks }: Props) {
           </div>
         </div>
 
-        {/* Nav pills (visual only) */}
+        {/* Nav pills */}
         <nav className="hidden md:flex items-center gap-1 ml-4">
-          <button className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 border border-white/10 text-white">
-            Screener
-          </button>
-          <button className="px-3 py-1.5 rounded-lg text-xs font-medium text-white/50 hover:text-white/80">
-            Watchlist
-          </button>
-          <button className="px-3 py-1.5 rounded-lg text-xs font-medium text-white/50 hover:text-white/80">
-            Analytics
-          </button>
+          {TABS.map(t => {
+            const active = activeTab === t.id;
+            const clickable = t.enabled;
+            return (
+              <button
+                key={t.id}
+                onClick={() => clickable && onTabChange(t.id)}
+                disabled={!clickable}
+                title={clickable ? undefined : 'Coming soon'}
+                className={
+                  `px-3 py-1.5 rounded-lg text-xs font-medium transition
+                   ${active
+                     ? 'bg-white/5 border border-white/10 text-white'
+                     : clickable
+                       ? 'text-white/50 hover:text-white/80'
+                       : 'text-white/25 cursor-not-allowed'
+                   }`
+                }
+              >
+                {t.label}
+              </button>
+            );
+          })}
         </nav>
 
         {/* Right side stats */}

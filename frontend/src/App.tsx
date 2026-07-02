@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import Header from './components/Header';
+import Header, { type Tab } from './components/Header';
 import FilterPanel from './components/FilterPanel';
 import ScanControls from './components/ScanControls';
 import ResultsGrid, { passesRvol } from './components/ResultsGrid';
+import RvolScreener from './components/rvol/RvolScreener';
 import { fetchConfig, fetchStocks, fetchUniverses, startScan, type UniverseInfo } from './api';
 import type { ConfigResponse, FilterConfig, StockRow, Timeframe, VCPResult } from './types';
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState<Tab>('vcp');
   const [config, setConfig] = useState<ConfigResponse | null>(null);
   const [universes, setUniverses] = useState<UniverseInfo[]>([]);
   const [selectedUniverse, setSelectedUniverse] = useState<string>('Nifty 50');
@@ -118,44 +120,56 @@ export default function App() {
 
   return (
     <div className="min-h-screen text-white">
-      <Header totalStocks={stocks.length} />
+      <Header
+        totalStocks={stocks.length}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
 
       <div className="mx-auto max-w-[1400px] px-6 py-6 flex flex-col lg:flex-row gap-5">
-        <FilterPanel
-          filters={filters}
-          onFilters={setFilters}
-          timeframe={timeframe}
-          onTimeframe={setTimeframe}
-          timeframes={config.timeframes}
-          grades={config.grades}
-          presets={config.presets}
-          onPreset={applyPreset}
-          totalStocks={stocks.length}
-          universes={universes}
-          selectedUniverse={selectedUniverse}
-          onUniverseChange={setSelectedUniverse}
-        />
+        {activeTab === 'vcp' && (
+          <>
+            <FilterPanel
+              filters={filters}
+              onFilters={setFilters}
+              timeframe={timeframe}
+              onTimeframe={setTimeframe}
+              timeframes={config.timeframes}
+              grades={config.grades}
+              presets={config.presets}
+              onPreset={applyPreset}
+              totalStocks={stocks.length}
+              universes={universes}
+              selectedUniverse={selectedUniverse}
+              onUniverseChange={setSelectedUniverse}
+            />
 
-        <main className="flex-1 space-y-4">
-          <ScanControls
-            scanning={scanning}
-            progress={progress}
-            total={total}
-            currentSymbol={currentSymbol}
-            recentSymbols={recentSymbols}
-            errors={errors}
-            matches={matches}
-            onStart={start}
-            onStop={stop}
-          />
-          <ResultsGrid
-            results={results}
-            minScore={filters.minScore}
-            gradeFilter={filters.gradeFilter}
-            rvolFilter={filters.rvolFilter}
-            strongStartOnly={filters.strongStartOnly}
-          />
-        </main>
+            <main className="flex-1 space-y-4">
+              <ScanControls
+                scanning={scanning}
+                progress={progress}
+                total={total}
+                currentSymbol={currentSymbol}
+                recentSymbols={recentSymbols}
+                errors={errors}
+                matches={matches}
+                onStart={start}
+                onStop={stop}
+              />
+              <ResultsGrid
+                results={results}
+                minScore={filters.minScore}
+                gradeFilter={filters.gradeFilter}
+                rvolFilter={filters.rvolFilter}
+                strongStartOnly={filters.strongStartOnly}
+              />
+            </main>
+          </>
+        )}
+
+        {activeTab === 'rvol' && (
+          <RvolScreener universes={universes} />
+        )}
       </div>
     </div>
   );

@@ -23,7 +23,8 @@ from .config import (
 )
 from .data_source import fetch_bars
 from .logging_config import scan_logger, setup_logging
-from .schemas import ScanRequest, SingleScanRequest
+from .rvol import analyze_rvol
+from .schemas import RvolScanRequest, ScanRequest, SingleScanRequest
 from .universe import universe
 from .vcp import analyze_vcp
 
@@ -234,6 +235,99 @@ async def scan_stream(req: ScanRequest):
 
         elapsed = time.perf_counter() - scan_started
         slog.info("SCAN DONE · total=%d · ok=%d · err=%d · elapsed=%.1fs",
+                  total, ok_count, err_count, elapsed)
+        slog.info("=" * 60)
+        yield _sse("done", {"total": total, "processed": processed, "ok": ok_count, "errors": err_count})
+
+    return EventSourceResponse(event_generator())
+
+
+# ---------- RVOL screener (SSE) ----------
+
+async def _process_one_rvol(symbol: str, exchange: str, lookback: int):
+    """Fetch daily bars + compute RVOL for one symbol."""
+    yahoo_symbol = to_yahoo_symbol(symbol, exchange)
+    t0 = time.perf_counter()
+    try:
+        bars = await _fetch_with_retry(yahoo_symbol, "1d")
+        if bars.empty:
+            alt = alternate_exchange(exchange)
+            alt_symbol = to_yahoo_symbol(symbol, alt)
+            if alt_symbol != yahoo_symbol:
+                bars = await _fetch_with_retry(alt_symbol, "1d")
+                if not bars.empty:
+                    yahoo_symbol = alt_symbol
+        dur_ms = (time.perf_counter() - t0) * 1000
+        if bars.empty:
+            slog.warning("RVOL ✗ %-14s dur=%6.1fms → data unavailable", yahoo_symbol, dur_ms)
+            return "error", {"symbol": symbol, "reason": "Data unavailable"}
+        result = await asyncio.to_thread(analyze_rvol, symbol, yahoo_symbol, bars, lookback)
+        slog.info(
+            "RVOL ✓ %-14s dur=%6.1fms rvol=%6.2fx chg=%+6.2f%% ss=%s bars=%d",
+            yahoo_symbol, dur_ms,
+            result.get("rvol", 0.0),
+            result.get("chgPct", 0.0),
+            "★" if result.get("strongStart") else " ",
+            len(bars),
+        )
+        return "result", result
+    except Exception as e:
+        dur_ms = (time.perf_counter() - t0) * 1000
+        slog.error("RVOL ✗ %-14s dur=%6.1fms → %s", yahoo_symbol, dur_ms, e)
+        return "error", {"symbol": symbol, "reason": f"Error: {e}"}
+
+
+@app.post("/api/scan/rvol")
+async def scan_rvol_stream(req: RvolScanRequest):
+    """Server-Sent Events stream for the RVOL screener.
+
+    For each symbol, streams a `result` event with RVOL, Chg%, Strong Start,
+    OHLCV of the latest daily bar, and the N-day average volume baseline.
+    The frontend is responsible for sorting/ranking the collected results.
+    """
+    symbols = req.symbols
+    lookback = max(1, min(100, int(req.lookback or 20)))
+
+    slog.info("=" * 60)
+    slog.info("RVOL SCAN START · lookback=%d · symbols=%d · batch=%d", lookback, len(symbols), BATCH_SIZE)
+    scan_started = time.perf_counter()
+    ok_count = 0
+    err_count = 0
+
+    async def event_generator():
+        nonlocal ok_count, err_count
+        total = len(symbols)
+        processed = 0
+
+        for i in range(0, total, BATCH_SIZE):
+            batch = symbols[i:i + BATCH_SIZE]
+
+            for j, row in enumerate(batch):
+                yield _sse("progress", {
+                    "current": processed + j + 1,
+                    "total": total,
+                    "symbol": to_yahoo_symbol(row.symbol, row.exchange),
+                })
+
+            tasks = [_process_one_rvol(row.symbol, row.exchange, lookback) for row in batch]
+            results = await asyncio.gather(*tasks, return_exceptions=False)
+
+            batch_ok = batch_err = 0
+            for (kind, payload) in results:
+                yield _sse(kind, payload)
+                if kind == "result":
+                    ok_count += 1; batch_ok += 1
+                else:
+                    err_count += 1; batch_err += 1
+
+            processed += len(batch)
+            slog.info("  RVOL batch %3d-%3d/%d · ok=%d err=%d",
+                      processed - len(batch) + 1, processed, total, batch_ok, batch_err)
+
+            await asyncio.sleep(BATCH_PAUSE)
+
+        elapsed = time.perf_counter() - scan_started
+        slog.info("RVOL SCAN DONE · total=%d · ok=%d · err=%d · elapsed=%.1fs",
                   total, ok_count, err_count, elapsed)
         slog.info("=" * 60)
         yield _sse("done", {"total": total, "processed": processed, "ok": ok_count, "errors": err_count})

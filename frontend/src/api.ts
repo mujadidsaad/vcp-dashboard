@@ -1,4 +1,4 @@
-import type { ConfigResponse, FilterConfig, StockRow, VCPResult } from './types';
+import type { ConfigResponse, FilterConfig, RvolResult, StockRow, VCPResult } from './types';
 
 // In dev, Vite proxies /api/* to http://localhost:8000 (see vite.config.ts).
 // In production (Vercel), set VITE_API_BASE=https://your-backend.onrender.com
@@ -28,34 +28,30 @@ export async function fetchUniverses(): Promise<UniverseInfo[]> {
   return data.universes as UniverseInfo[];
 }
 
-export interface ScanEvents {
+export interface ScanEvents<TResult = VCPResult> {
   onProgress?: (p: { current: number; total: number; symbol: string }) => void;
-  onResult?: (r: VCPResult) => void;
+  onResult?: (r: TResult) => void;
   onError?: (e: { symbol: string; reason: string }) => void;
   onDone?: (d: { total: number; processed: number }) => void;
 }
 
-/**
- * POST /api/scan (SSE). We parse the SSE stream manually from a fetch body
- * because EventSource does not support POST bodies.
- */
-export async function startScan(
-  symbols: StockRow[],
-  filters: FilterConfig,
-  timeframe: string,
-  events: ScanEvents,
-  signal?: AbortSignal
+// ----- shared SSE stream parser -----
+async function consumeSse<T>(
+  url: string,
+  body: unknown,
+  events: ScanEvents<T>,
+  signal?: AbortSignal,
 ): Promise<void> {
-  const res = await fetch(`${BASE}/api/scan`, {
+  const res = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Accept': 'text/event-stream',   // required by sse-starlette
+      'Accept': 'text/event-stream',
     },
-    body: JSON.stringify({ symbols, filters, timeframe }),
+    body: JSON.stringify(body),
     signal,
   });
-  if (!res.ok || !res.body) throw new Error(`scan: ${res.status}`);
+  if (!res.ok || !res.body) throw new Error(`sse ${url}: ${res.status}`);
 
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
@@ -77,9 +73,6 @@ export async function startScan(
     }
   };
 
-  // SSE spec allows LF, CRLF, or CR as line terminators. Normalise before
-  // splitting so we don't miss events when the server (sse-starlette) sends
-  // \r\n\r\n and the parser is looking for \n\n.
   const findBoundary = (s: string): number => {
     const a = s.indexOf('\n\n');
     const b = s.indexOf('\r\n\r\n');
@@ -96,13 +89,11 @@ export async function startScan(
     let sep;
     while ((sep = findBoundary(buffer)) !== -1) {
       const chunk = buffer.slice(0, sep);
-      // Advance past whichever boundary matched (\n\n = 2, \r\n\r\n = 4).
       const advance = buffer.startsWith('\r\n\r\n', sep) ? 4 : 2;
       buffer = buffer.slice(sep + advance);
 
       let event = 'message';
       let data = '';
-      // Handle both \r\n and \n line endings within the chunk.
       for (const rawLine of chunk.split(/\r?\n/)) {
         const line = rawLine;
         if (line.startsWith('event:')) event = line.slice(6).trim();
@@ -111,4 +102,35 @@ export async function startScan(
       dispatch(event, data);
     }
   }
+}
+
+/** POST /api/scan (VCP screener, SSE). */
+export async function startScan(
+  symbols: StockRow[],
+  filters: FilterConfig,
+  timeframe: string,
+  events: ScanEvents<VCPResult>,
+  signal?: AbortSignal
+): Promise<void> {
+  return consumeSse<VCPResult>(
+    `${BASE}/api/scan`,
+    { symbols, filters, timeframe },
+    events,
+    signal,
+  );
+}
+
+/** POST /api/scan/rvol (RVOL screener, SSE). */
+export async function startRvolScan(
+  symbols: StockRow[],
+  lookback: number,
+  events: ScanEvents<RvolResult>,
+  signal?: AbortSignal
+): Promise<void> {
+  return consumeSse<RvolResult>(
+    `${BASE}/api/scan/rvol`,
+    { symbols, lookback },
+    events,
+    signal,
+  );
 }

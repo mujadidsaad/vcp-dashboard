@@ -75,3 +75,35 @@ export interface ScanState {
 }
 
 export type Timeframe = '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1wk' | '1mo';
+
+// ============ RVOL Screener ============
+
+export interface RvolResult {
+  symbol: string;
+  yahooSymbol: string;
+  analysisDate: string;
+  close: number;
+  prevClose: number;
+  open: number;
+  low: number;
+  high: number;
+  volume: number;
+  avgVolume: number;
+  rvol: number;       // ratio (today / 20d avg)
+  rvolPct: number;    // rvol * 100
+  chgPct: number;
+  strongStart: boolean;
+  reason?: string;
+}
+
+export type RvolSortMode = 'RVOL' | 'ChgPct' | 'SS';
+
+export interface RvolScanConfig {
+  lookback: number;
+  rvolFlagPct: number;     // colour threshold for the RVOL value itself
+  chgFlagPct: number;      // ± this Chg% turns row green / red (else amber)
+  gatePct: number;         // top X% of the list gets tinted rows
+  showRvolAs: 'Percent' | 'Ratio';
+  sortBy: RvolSortMode;
+  strongStartOnly: boolean;
+}

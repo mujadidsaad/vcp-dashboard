@@ -20,3 +20,8 @@ class SingleScanRequest(BaseModel):
     exchange: str = "NSE"
     timeframe: str = "1d"
     filters: Optional[Dict[str, Any]] = None
+
+
+class RvolScanRequest(BaseModel):
+    symbols: List[StockRow]
+    lookback: int = 20
