@@ -31,6 +31,10 @@ DEFAULT_FILTERS: dict[str, Any] = {
     "volumeSpikeMultiplier": 1.5,
     "volumeDryUpMultiplier": 0.85,
     "minBaseDuration": 30,
+    # RVOL filter: one of "any" | "lt1" | "lt2" | "lt3" | "gt3"
+    "rvolFilter": "any",
+    # Strong Start filter: only include stocks with strongStart=true
+    "strongStartOnly": False,
     "checks": {
         "priorUptrend":          {"enabled": True, "points": 12, "threshold": 0.15},
         "aboveMa50":             {"enabled": True, "points": 10},

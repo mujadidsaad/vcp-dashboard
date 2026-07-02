@@ -85,6 +85,11 @@ export default function StockCard({ r }: { r: VCPResult }) {
           <Row label="Dist. 52w High" value={r.distanceFrom52wHigh || '—'} />
           <Row label="Price ∆" value={r.priceIncrease} tone={priceUp ? 'good' : 'bad'} />
           <Row label="RSI" value={r.rsiValue} />
+          <Row
+            label="RVOL"
+            value={r.rvol ? `${r.rvol.toFixed(2)}x` : '—'}
+            tone={r.rvol >= 3 ? 'accent' : r.rvol >= 1 ? 'good' : undefined}
+          />
           <Row label="Breakout" value={r.confirmedBreakout ? 'Yes' : 'No'} tone={r.confirmedBreakout ? 'good' : undefined} />
         </div>
       </div>
@@ -97,6 +102,7 @@ export default function StockCard({ r }: { r: VCPResult }) {
         <Tag label="EMA50>200" on={r.ema50AboveEma200} />
         <Tag label="VolContract" on={r.volumeContraction} />
         <Tag label="AnomalyFree" on={r.anomalyFree} />
+        <Tag label="StrongStart" on={!!r.strongStart} />
       </div>
 
       <p className="text-[10.5px] text-white/40 leading-snug border-t border-white/5 pt-2 line-clamp-2">

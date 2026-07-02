@@ -1,15 +1,35 @@
-import type { VCPResult } from '../types';
+import type { RvolFilter, VCPResult } from '../types';
 import StockCard from './StockCard';
 
 interface Props {
   results: VCPResult[];
   minScore: number;
   gradeFilter: string[];
+  rvolFilter?: RvolFilter;
+  strongStartOnly?: boolean;
 }
 
-export default function ResultsGrid({ results, minScore, gradeFilter }: Props) {
+export function passesRvol(rvol: number | undefined, mode: RvolFilter | undefined): boolean {
+  if (!mode || mode === 'any') return true;
+  // Missing / zero RVOL considered "unknown" -> exclude when a strict filter is applied
+  if (rvol === undefined || rvol === null || Number.isNaN(rvol) || rvol <= 0) return false;
+  switch (mode) {
+    case 'lt1': return rvol < 1;
+    case 'lt2': return rvol < 2;
+    case 'lt3': return rvol < 3;
+    case 'gt3': return rvol > 3;
+    default:    return true;
+  }
+}
+
+export default function ResultsGrid({ results, minScore, gradeFilter, rvolFilter, strongStartOnly }: Props) {
   const visible = results
-    .filter(r => r.vcpScore >= minScore && (gradeFilter.length === 0 || gradeFilter.includes(r.setupGrade)))
+    .filter(r =>
+      r.vcpScore >= minScore &&
+      (gradeFilter.length === 0 || gradeFilter.includes(r.setupGrade)) &&
+      passesRvol(r.rvol, rvolFilter) &&
+      (!strongStartOnly || r.strongStart === true)
+    )
     .sort((a, b) => b.vcpScore - a.vcpScore);
 
   const totalReceived = results.length;

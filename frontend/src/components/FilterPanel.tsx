@@ -1,4 +1,4 @@
-import type { FilterConfig, Timeframe } from '../types';
+import type { FilterConfig, RvolFilter, Timeframe } from '../types';
 
 interface Props {
   filters: FilterConfig;
@@ -113,6 +113,32 @@ export default function FilterPanel(p: Props) {
         <div className="flex justify-between text-[10px] text-white/30 mt-1">
           <span>0</span><span>50</span><span>100</span>
         </div>
+      </Section>
+
+      <Section title="RVOL Filter">
+        <select
+          value={c.rvolFilter ?? 'any'}
+          onChange={e => p.onFilters({ ...c, rvolFilter: e.target.value as RvolFilter })}
+          className="w-full h-9 px-2.5 rounded-md bg-white/[0.03] border border-white/10 text-[12px] text-white focus:outline-none focus:border-accent/50"
+        >
+          <option value="any" className="bg-bg text-white">Any RVOL</option>
+          <option value="lt1"  className="bg-bg text-white">RVOL &lt; 1</option>
+          <option value="lt2"  className="bg-bg text-white">RVOL &lt; 2</option>
+          <option value="lt3"  className="bg-bg text-white">RVOL &lt; 3</option>
+          <option value="gt3"  className="bg-bg text-white">RVOL &gt; 3</option>
+        </select>
+      </Section>
+
+      <Section title="Strong Start">
+        <label className="flex items-center gap-2 text-[12px] text-white/75 cursor-pointer hover:text-white">
+          <input
+            type="checkbox"
+            checked={!!c.strongStartOnly}
+            onChange={e => p.onFilters({ ...c, strongStartOnly: e.target.checked })}
+            className="accent-accent w-3.5 h-3.5"
+          />
+          <span className="flex-1">Only Strong Start (open &gt; prev close, low ≥ prev close × 0.995)</span>
+        </label>
       </Section>
 
       <Section title="Grade Filter">

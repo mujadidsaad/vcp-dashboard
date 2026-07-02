@@ -31,8 +31,12 @@ export interface VCPResult {
   anomalyFree: boolean;
   volumeContraction: boolean;
   breakoutDetected: boolean;
+  rvol: number;
+  strongStart: boolean;
   reason: string;
 }
+
+export type RvolFilter = 'any' | 'lt1' | 'lt2' | 'lt3' | 'gt3';
 
 export interface CheckConfig {
   enabled: boolean;
@@ -49,6 +53,8 @@ export interface FilterConfig {
   volumeSpikeMultiplier: number;
   volumeDryUpMultiplier: number;
   minBaseDuration: number;
+  rvolFilter: RvolFilter;
+  strongStartOnly: boolean;
   checks: Record<string, CheckConfig>;
 }
 

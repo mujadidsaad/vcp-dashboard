@@ -107,6 +107,7 @@ def _empty_result(symbol: str, yahoo_symbol: str, reason: str = "Insufficient da
         "priceAboveMa50": False, "priceAboveMa200": False,
         "ema20AboveEma50": False, "ema50AboveEma200": False,
         "anomalyFree": False, "volumeContraction": False, "breakoutDetected": False,
+        "rvol": 0, "strongStart": False,
         "reason": reason,
     }
 
@@ -137,6 +138,34 @@ def analyze_vcp(symbol: str, yahoo_symbol: str, bars: pd.DataFrame, filters: dic
 
     close = float(closes[-1])
     price_increase = (close - float(closes[0])) / float(closes[0]) if closes[0] != 0 else 0.0
+
+    # -- RVOL (Relative Volume): today's volume / 20-bar SMA of volume (excluding today)
+    if n >= 21:
+        avg_vol_20 = float(np.nanmean(volumes[-21:-1]))
+    elif n >= 2:
+        avg_vol_20 = float(np.nanmean(volumes[:-1]))
+    else:
+        avg_vol_20 = float("nan")
+    today_vol = float(volumes[-1]) if n >= 1 else float("nan")
+    rvol_value = (
+        today_vol / avg_vol_20
+        if avg_vol_20 and avg_vol_20 > 0 and not np.isnan(avg_vol_20)
+        else float("nan")
+    )
+
+    # -- Strong Start: today's open > previous close AND today's low >= previous close * 0.995
+    if n >= 2:
+        prev_close = float(closes[-2])
+        today_open = float(df.iloc[-1]["open"])
+        today_low = float(lows[-1])
+        strong_start = (
+            not np.isnan(prev_close)
+            and prev_close > 0
+            and today_open > prev_close
+            and today_low >= prev_close * 0.995
+        )
+    else:
+        strong_start = False
 
     contractions = detect_contractions(df)
     retracements = [c.retracement for c in contractions]
@@ -307,6 +336,8 @@ def analyze_vcp(symbol: str, yahoo_symbol: str, bars: pd.DataFrame, filters: dic
         "anomalyFree": bool(anomaly_free),
         "volumeContraction": bool(volume_contraction),
         "breakoutDetected": bool(breakout_detected),
+        "rvol": (round(rvol_value, 2) if not np.isnan(rvol_value) else 0),
+        "strongStart": bool(strong_start),
         "reason": reason,
         "contractionsList": [asdict(c) for c in contractions],
     }

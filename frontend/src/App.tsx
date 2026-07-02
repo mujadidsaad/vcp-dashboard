@@ -3,7 +3,7 @@ import { flushSync } from 'react-dom';
 import Header from './components/Header';
 import FilterPanel from './components/FilterPanel';
 import ScanControls from './components/ScanControls';
-import ResultsGrid from './components/ResultsGrid';
+import ResultsGrid, { passesRvol } from './components/ResultsGrid';
 import { fetchConfig, fetchStocks, fetchUniverses, startScan, type UniverseInfo } from './api';
 import type { ConfigResponse, FilterConfig, StockRow, Timeframe, VCPResult } from './types';
 
@@ -53,7 +53,9 @@ export default function App() {
     if (!filters) return 0;
     return results.filter(r =>
       r.vcpScore >= filters.minScore &&
-      (filters.gradeFilter.length === 0 || filters.gradeFilter.includes(r.setupGrade))
+      (filters.gradeFilter.length === 0 || filters.gradeFilter.includes(r.setupGrade)) &&
+      passesRvol(r.rvol, filters.rvolFilter) &&
+      (!filters.strongStartOnly || r.strongStart === true)
     ).length;
   }, [results, filters]);
 
@@ -150,6 +152,8 @@ export default function App() {
             results={results}
             minScore={filters.minScore}
             gradeFilter={filters.gradeFilter}
+            rvolFilter={filters.rvolFilter}
+            strongStartOnly={filters.strongStartOnly}
           />
         </main>
       </div>
