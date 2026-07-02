@@ -4,6 +4,7 @@ import type { RvolResult, RvolScanConfig, StockRow } from '../../types';
 import { fetchStocks, startRvolScan, type UniverseInfo } from '../../api';
 import RvolControls from './RvolControls';
 import RvolResultsTable from './RvolResultsTable';
+import { applyRvolFilterSort, downloadCsv, rvolToCsv } from './csv';
 
 const DEFAULT_CFG: RvolScanConfig = {
   lookback: 20,
@@ -87,6 +88,14 @@ export default function RvolScreener({ universes }: Props) {
     setScanning(false);
   };
 
+  const download = () => {
+    const rows = applyRvolFilterSort(results, cfg);
+    if (rows.length === 0) return;
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const safeUniverse = selectedUniverse.replace(/[^a-z0-9]+/gi, '_');
+    downloadCsv(`rvol_${safeUniverse}_${stamp}.csv`, rvolToCsv(rows, cfg));
+  };
+
   return (
     <main className="flex-1 space-y-4">
       <RvolControls
@@ -98,6 +107,7 @@ export default function RvolScreener({ universes }: Props) {
         scanning={scanning}
         onStart={start}
         onStop={stop}
+        onDownload={download}
         processed={processed}
         total={total}
         currentSymbol={currentSymbol}

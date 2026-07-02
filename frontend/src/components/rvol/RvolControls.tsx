@@ -10,6 +10,7 @@ interface Props {
   scanning: boolean;
   onStart: () => void;
   onStop: () => void;
+  onDownload: () => void;
   processed: number;
   total: number;
   currentSymbol: string;
@@ -73,6 +74,23 @@ export default function RvolControls(p: Props) {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={p.onDownload}
+            disabled={p.results === 0 || p.scanning}
+            title={
+              p.scanning
+                ? 'Wait for scan to finish'
+                : p.results === 0
+                  ? 'Run a scan first'
+                  : 'Download visible rows as CSV (opens in Excel)'
+            }
+            className="px-3 h-9 rounded-md text-[12px] font-semibold border border-white/15 bg-white/[0.04] text-white/85 hover:bg-white/[0.09] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
+          >
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
+              <path d="M10 3v10m0 0l-4-4m4 4l4-4M4 17h12" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Download CSV
+          </button>
           {p.scanning ? (
             <button
               onClick={p.onStop}
