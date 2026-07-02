@@ -7,7 +7,20 @@ import ResultsGrid, { passesRvol } from './components/ResultsGrid';
 import RvolScreener from './components/rvol/RvolScreener';
 import { applyVcpFilterSort, downloadCsv, vcpToCsv } from './components/vcpCsv';
 import { fetchConfig, fetchStocks, fetchUniverses, startScan, type UniverseInfo } from './api';
+import { clearState, loadState, saveState } from './persist';
 import type { ConfigResponse, FilterConfig, StockRow, Timeframe, VCPResult } from './types';
+
+const VCP_PERSIST_KEY = 'vcp-scan';
+const VCP_PERSIST_VER = 1;
+
+interface PersistedVcpScan {
+  results: VCPResult[];
+  errors: number;
+  progress: number;
+  total: number;
+  timeframe: Timeframe;
+  selectedUniverse: string;
+}
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('vcp');
@@ -24,9 +37,10 @@ export default function App() {
   const [recentSymbols, setRecentSymbols] = useState<string[]>([]);
   const [results, setResults] = useState<VCPResult[]>([]);
   const [errors, setErrors] = useState(0);
+  const [lastScanAt, setLastScanAt] = useState<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Load config + universe metadata once
+  // Load config + universe metadata once, and rehydrate the last VCP scan
   useEffect(() => {
     (async () => {
       try {
@@ -34,6 +48,17 @@ export default function App() {
         setConfig(cfg);
         setFilters(cfg.defaultFilters);
         setUniverses(us);
+
+        const cached = loadState<PersistedVcpScan>(VCP_PERSIST_KEY, VCP_PERSIST_VER);
+        if (cached && cached.data.results.length > 0) {
+          setResults(cached.data.results);
+          setErrors(cached.data.errors);
+          setProgress(cached.data.progress);
+          setTotal(cached.data.total);
+          setTimeframe(cached.data.timeframe);
+          setSelectedUniverse(cached.data.selectedUniverse);
+          setLastScanAt(cached.savedAt);
+        }
       } catch (e) {
         console.error(e);
       }
@@ -71,6 +96,9 @@ export default function App() {
 
   const start = async () => {
     if (!filters || !stocks.length) return;
+    // Any prior cached scan is now stale — wipe it before we start.
+    clearState(VCP_PERSIST_KEY);
+    setLastScanAt(null);
     setResults([]);
     setErrors(0);
     setProgress(0);
@@ -109,6 +137,32 @@ export default function App() {
     abortRef.current?.abort();
     setScanning(false);
   };
+
+  const clearResults = () => {
+    setResults([]);
+    setErrors(0);
+    setProgress(0);
+    setTotal(0);
+    setLastScanAt(null);
+    clearState(VCP_PERSIST_KEY);
+  };
+
+  // Persist a completed / stopped scan so it survives a refresh.
+  useEffect(() => {
+    if (scanning) return;
+    if (results.length === 0) return;
+    const payload: PersistedVcpScan = {
+      results,
+      errors,
+      progress,
+      total,
+      timeframe,
+      selectedUniverse,
+    };
+    saveState(VCP_PERSIST_KEY, VCP_PERSIST_VER, payload);
+    // Only record "last scan at" for scans that actually produced data.
+    setLastScanAt(Date.now());
+  }, [scanning, results, errors, progress, total, timeframe, selectedUniverse]);
 
   const downloadVcp = () => {
     if (!filters) return;
@@ -167,6 +221,9 @@ export default function App() {
                 onStop={stop}
                 onDownload={downloadVcp}
                 canDownload={matches > 0}
+                lastScanAt={lastScanAt}
+                onRescan={start}
+                onClear={clearResults}
               />
               <ResultsGrid
                 results={results}

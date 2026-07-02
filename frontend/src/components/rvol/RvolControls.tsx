@@ -11,12 +11,25 @@ interface Props {
   onStart: () => void;
   onStop: () => void;
   onDownload: () => void;
+  onRescan?: () => void;
+  onClear?: () => void;
+  /** ms timestamp of the last completed scan whose results are still in view */
+  lastScanAt?: number | null;
   processed: number;
   total: number;
   currentSymbol: string;
   totalStocks: number;
   results: number;
   errors: number;
+}
+
+function formatAgo(ms: number): string {
+  const diff = Date.now() - ms;
+  if (!Number.isFinite(diff) || diff < 0) return '';
+  if (diff < 45_000)          return 'just now';
+  if (diff < 3_600_000)       return `${Math.round(diff / 60_000)}m ago`;
+  if (diff < 24 * 3_600_000)  return `${Math.round(diff / 3_600_000)}h ago`;
+  return `${Math.round(diff / (24 * 3_600_000))}d ago`;
 }
 
 function LabeledSelect<T extends string>({
@@ -201,6 +214,43 @@ export default function RvolControls(p: Props) {
           />
         </div>
       </div>
+
+      {/* Cached-scan ribbon */}
+      {!p.scanning && p.lastScanAt && p.results > 0 && (
+        <div className="flex flex-wrap items-center gap-3 rounded-md border border-white/10 bg-white/[0.03] px-3 py-2">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.75" className="w-4 h-4 text-white/50">
+            <path d="M4 4v4h4M16 16v-4h-4" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M6 8a6 6 0 019.5-2M14 12a6 6 0 01-9.5 2" strokeLinecap="round" />
+          </svg>
+          <div className="text-[12px] text-white/70">
+            Showing cached results from{' '}
+            <span className="stat-num text-white font-medium">{formatAgo(p.lastScanAt)}</span>
+            <span className="text-white/40"> · restored from your last scan</span>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            {p.onRescan && (
+              <button
+                onClick={p.onRescan}
+                className="h-8 px-3 rounded-md text-[12px] font-semibold bg-accent/15 border border-accent/40 text-accent hover:bg-accent/25 inline-flex items-center gap-1.5"
+              >
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
+                  <path d="M4 4v4h4M16 16v-4h-4" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M6 8a6 6 0 019.5-2M14 12a6 6 0 01-9.5 2" strokeLinecap="round" />
+                </svg>
+                Rescan
+              </button>
+            )}
+            {p.onClear && (
+              <button
+                onClick={p.onClear}
+                className="h-8 px-3 rounded-md text-[12px] font-medium border border-white/10 text-white/60 hover:text-white hover:border-white/20"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
