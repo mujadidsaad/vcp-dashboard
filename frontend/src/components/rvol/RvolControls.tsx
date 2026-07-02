@@ -32,6 +32,26 @@ function formatAgo(ms: number): string {
   return `${Math.round(diff / (24 * 3_600_000))}d ago`;
 }
 
+function formatAbs(ms: number): string {
+  if (!Number.isFinite(ms) || ms <= 0) return '';
+  const d = new Date(ms);
+  const today = new Date();
+  const same =
+    d.getFullYear() === today.getFullYear() &&
+    d.getMonth() === today.getMonth() &&
+    d.getDate() === today.getDate();
+  const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (same) return `Today, ${time}`;
+  const yest = new Date(today);
+  yest.setDate(today.getDate() - 1);
+  const isYest =
+    d.getFullYear() === yest.getFullYear() &&
+    d.getMonth() === yest.getMonth() &&
+    d.getDate() === yest.getDate();
+  if (isYest) return `Yesterday, ${time}`;
+  return `${d.toLocaleDateString([], { day: '2-digit', month: 'short' })}, ${time}`;
+}
+
 function LabeledSelect<T extends string>({
   label, value, onChange, options,
 }: { label: string; value: T; onChange: (v: T) => void; options: Array<{ value: T; label: string }> }) {
@@ -198,10 +218,17 @@ export default function RvolControls(p: Props) {
       {/* Progress + stats */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-[11px] text-white/50">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
             <span>Processed <span className="stat-num text-white">{p.processed.toLocaleString()}</span> / <span className="stat-num">{p.total.toLocaleString()}</span></span>
             <span>Results <span className="stat-num text-accent">{p.results.toLocaleString()}</span></span>
             {p.errors > 0 && <span>Errors <span className="stat-num text-bad">{p.errors}</span></span>}
+            {p.lastScanAt && (
+              <span title={new Date(p.lastScanAt).toLocaleString()}>
+                Last scan{' '}
+                <span className="stat-num text-white/85">{formatAbs(p.lastScanAt)}</span>
+                <span className="text-white/40"> · {formatAgo(p.lastScanAt)}</span>
+              </span>
+            )}
           </div>
           <div className="truncate max-w-[280px] text-white/40">
             {p.scanning && p.currentSymbol ? `→ ${p.currentSymbol}` : p.scanning ? 'Fetching…' : 'Idle'}

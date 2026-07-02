@@ -27,6 +27,26 @@ function formatAgo(ms: number): string {
   return `${Math.round(diff / (24 * 3_600_000))}d ago`;
 }
 
+function formatAbs(ms: number): string {
+  if (!Number.isFinite(ms) || ms <= 0) return '';
+  const d = new Date(ms);
+  const today = new Date();
+  const same =
+    d.getFullYear() === today.getFullYear() &&
+    d.getMonth() === today.getMonth() &&
+    d.getDate() === today.getDate();
+  const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (same) return `Today, ${time}`;
+  const yest = new Date(today);
+  yest.setDate(today.getDate() - 1);
+  const isYest =
+    d.getFullYear() === yest.getFullYear() &&
+    d.getMonth() === yest.getMonth() &&
+    d.getDate() === yest.getDate();
+  if (isYest) return `Yesterday, ${time}`;
+  return `${d.toLocaleDateString([], { day: '2-digit', month: 'short' })}, ${time}`;
+}
+
 function Stat({ label, value, tone = 'default' }: { label: string; value: React.ReactNode; tone?: 'default' | 'good' | 'warn' | 'accent' }) {
   const toneCls =
     tone === 'good'   ? 'text-good' :
@@ -99,6 +119,18 @@ export default function ScanControls(p: Props) {
         </div>
 
         <div className="flex items-center gap-5">
+          {p.lastScanAt && (
+            <div className="flex flex-col items-start">
+              <div className="text-[10px] uppercase tracking-[0.16em] text-white/40">Last scan</div>
+              <div
+                className="stat-num text-[13px] font-semibold text-white/85 mt-0.5"
+                title={new Date(p.lastScanAt).toLocaleString()}
+              >
+                {formatAbs(p.lastScanAt)}
+                <span className="text-white/40 font-normal ml-1">· {formatAgo(p.lastScanAt)}</span>
+              </div>
+            </div>
+          )}
           <Stat label="Matches" value={p.matches} tone="accent" />
           <Stat label="Errors" value={p.errors} tone={p.errors > 0 ? 'warn' : 'default'} />
           <Stat label="Complete" value={<>{pct}<span className="text-white/30 text-sm">%</span></>} tone="good" />
