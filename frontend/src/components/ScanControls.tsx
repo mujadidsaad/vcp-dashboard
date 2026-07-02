@@ -8,6 +8,8 @@ interface Props {
   recentSymbols: string[];
   onStart: () => void;
   onStop: () => void;
+  onDownload: () => void;
+  canDownload: boolean;
 }
 
 function Stat({ label, value, tone = 'default' }: { label: string; value: React.ReactNode; tone?: 'default' | 'good' | 'warn' | 'accent' }) {
@@ -48,6 +50,24 @@ export default function ScanControls(p: Props) {
               Start Scan
             </button>
           )}
+
+          <button
+            onClick={p.onDownload}
+            disabled={!p.canDownload || p.scanning}
+            title={
+              p.scanning
+                ? 'Wait for the scan to finish'
+                : !p.canDownload
+                  ? 'Run a scan first'
+                  : 'Download filtered results as CSV (opens in Excel)'
+            }
+            className="h-11 px-4 rounded-xl border border-white/15 bg-white/[0.04] text-white/85 font-semibold text-sm hover:bg-white/[0.09] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-2"
+          >
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+              <path d="M10 3v10m0 0l-4-4m4 4l4-4M4 17h12" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Download CSV
+          </button>
 
           {/* HUGE progress counter - always visible */}
           <div className="flex items-baseline gap-1">

@@ -5,6 +5,7 @@ import FilterPanel from './components/FilterPanel';
 import ScanControls from './components/ScanControls';
 import ResultsGrid, { passesRvol } from './components/ResultsGrid';
 import RvolScreener from './components/rvol/RvolScreener';
+import { applyVcpFilterSort, downloadCsv, vcpToCsv } from './components/vcpCsv';
 import { fetchConfig, fetchStocks, fetchUniverses, startScan, type UniverseInfo } from './api';
 import type { ConfigResponse, FilterConfig, StockRow, Timeframe, VCPResult } from './types';
 
@@ -109,6 +110,15 @@ export default function App() {
     setScanning(false);
   };
 
+  const downloadVcp = () => {
+    if (!filters) return;
+    const rows = applyVcpFilterSort(results, filters);
+    if (rows.length === 0) return;
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const safeUniverse = selectedUniverse.replace(/[^a-z0-9]+/gi, '_');
+    downloadCsv(`vcp_${safeUniverse}_${timeframe}_${stamp}.csv`, vcpToCsv(rows));
+  };
+
   if (!config || !filters) {
     return (
       <div className="min-h-screen flex items-center justify-center gap-3 text-white/50 text-sm">
@@ -155,6 +165,8 @@ export default function App() {
                 matches={matches}
                 onStart={start}
                 onStop={stop}
+                onDownload={downloadVcp}
+                canDownload={matches > 0}
               />
               <ResultsGrid
                 results={results}
