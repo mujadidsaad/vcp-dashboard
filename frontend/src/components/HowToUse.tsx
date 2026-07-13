@@ -55,12 +55,12 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
       <div className="panel p-8 space-y-4 text-center">
         <div className="text-4xl">Help</div>
         <h1 className="text-2xl md:text-3xl font-bold text-white">
-          Welcome to <span className="text-accent">VCP•SCAN</span>
+          Welcome to <span className="text-accent">SignalDesk</span>
         </h1>
         <p className="text-white/60 text-sm max-w-[600px] mx-auto">
-          A four-screen system for finding Indian stocks that are trending up,
-          consolidating tight, and breaking out on real volume — the Minervini /
-          IBD / Weinstein playbook, automated.
+          Your AI trading desk for Indian markets — a four-screen system for
+          finding stocks that are trending up, consolidating tight, and breaking
+          out on real volume. The Minervini / IBD / Weinstein playbook, automated.
         </p>
         <button
           onClick={onGetStarted}

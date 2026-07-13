@@ -28,9 +28,9 @@ export default function Header({ totalStocks, activeTab, onTabChange }: Props) {
             </svg>
           </div>
           <div className="leading-none">
-            <div className="text-white font-semibold tracking-tight">VCP<span className="text-accent">•</span>SCAN</div>
+            <div className="text-white font-semibold tracking-tight">Signal<span className="text-accent">Desk</span></div>
             <div className="text-[10px] uppercase tracking-[0.16em] text-white/40 mt-0.5">
-              Volatility Contraction Screener
+              Your AI trading desk for Indian markets
             </div>
           </div>
         </div>
