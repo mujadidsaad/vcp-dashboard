@@ -522,7 +522,7 @@ function FeatureTile({
       onClick={onSelect}
       onMouseEnter={onSelect}
       className={
-        `text-left rounded-xl border p-3 transition-all duration-200 flex items-center gap-3 ` +
+        `text-left rounded-xl border p-3 transition-all duration-200 flex items-center gap-3 flex-1 w-full min-h-[68px] ` +
         (active
           ? `${spec.ring} ${spec.bg} shadow-lg -translate-y-0.5`
           : 'border-white/10 bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/20')
@@ -666,23 +666,23 @@ function WhatYouGet({
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
         {/* Left: live preview */}
-        <div className="lg:col-span-3 space-y-3">
+        <div className="flex flex-col gap-3">
           <PreviewStage f={active} reduced={reduced} />
 
           {/* Detail row: 4 stats + CTA */}
-          <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
-            <div className="grid grid-cols-4 gap-2">
+          <div className="flex-1 rounded-xl border border-white/10 bg-white/[0.02] p-3 flex flex-col justify-between">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {active.stats.map((s, i) => (
                 <div key={i} className="rounded-lg border border-white/5 bg-white/[0.02] px-2.5 py-2">
-                  <div className="text-[10px] uppercase tracking-[0.14em] text-white/40">{s.label}</div>
+                  <div className="text-[10px] uppercase tracking-[0.14em] text-white/40 truncate">{s.label}</div>
                   <div className={`stat-num text-sm font-semibold ${toneClass(s.tone)}`}>{s.value}</div>
                 </div>
               ))}
             </div>
-            <div className="mt-3 flex items-center justify-between">
-              <div className="text-[11.5px] text-white/60 leading-snug pr-2">
+            <div className="mt-3 flex items-center justify-between gap-2">
+              <div className="text-[11.5px] text-white/60 leading-snug pr-2 min-w-0">
                 {active.tagline}
               </div>
               <button
@@ -713,8 +713,8 @@ function WhatYouGet({
           </div>
         </div>
 
-        {/* Right: feature tiles */}
-        <div className="lg:col-span-2 space-y-2">
+        {/* Right: feature tiles — flex column that stretches to match left height */}
+        <div className="flex flex-col gap-2">
           {specs.map(s => (
             <FeatureTile
               key={s.key}
