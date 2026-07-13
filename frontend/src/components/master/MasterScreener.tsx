@@ -375,7 +375,6 @@ export default function MasterScreener({ universes }: Props) {
 
       <main className="flex-1 space-y-4">
         <MasterControls
-          cfg={cfg}
           scanning={scanning}
           onStart={start}
           onStop={stop}
