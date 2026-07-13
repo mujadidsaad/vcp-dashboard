@@ -248,9 +248,12 @@ function LiveChart({ reduced }: { reduced: boolean }) {
   const chg = ((last.c - first.o) / first.o) * 100;
 
   return (
-    <div className="w-[260px] h-[160px] rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.02] p-4">
+    <div className="w-[260px] h-[190px] rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.02] p-4">
       <div className="flex items-center justify-between">
-        <div className="text-[10px] uppercase tracking-[0.16em] text-white/40">Live sample · SD/INR</div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] uppercase tracking-[0.16em] text-white/60 font-semibold">VCP breakout</span>
+          <span className="px-1.5 py-[1px] rounded-md text-[9px] font-bold uppercase tracking-[0.14em] border border-good/40 text-good bg-good/10">S2</span>
+        </div>
         <div className={`text-[10px] font-semibold ${chg >= 0 ? 'text-good' : 'text-bad'}`}>
           {chg >= 0 ? '+' : ''}{chg.toFixed(2)}%
         </div>
@@ -272,6 +275,18 @@ function LiveChart({ reduced }: { reduced: boolean }) {
           );
         })}
       </svg>
+
+      {/* footer: tiny volume ribbon + verdict hint */}
+      <div className="mt-1 flex items-center justify-between text-[10px]">
+        <div className="flex items-center gap-1.5">
+          <span className="text-white/40 uppercase tracking-[0.14em]">RVOL</span>
+          <span className="stat-num text-good font-semibold">1.9x</span>
+        </div>
+        <div className="flex items-center gap-1 text-good">
+          <span className="w-1.5 h-1.5 rounded-full bg-good animate-pulse" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.14em]">Ready</span>
+        </div>
+      </div>
     </div>
   );
 }
