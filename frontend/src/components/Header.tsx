@@ -1,7 +1,8 @@
 export type Tab = 'help' | 'master' | 'vcp' | 'rvol' | 'trend' | 'watchlist' | 'analytics';
 
 interface Props {
-  totalStocks: number;
+  /** Kept for backwards-compatibility with App.tsx; not rendered in the header anymore. */
+  totalStocks?: number;
   activeTab: Tab;
   onTabChange: (t: Tab) => void;
 }
@@ -16,7 +17,7 @@ const TABS: Array<{ id: Tab; label: string; enabled: boolean }> = [
   { id: 'analytics', label: 'Analytics',       enabled: false },
 ];
 
-export default function Header({ totalStocks, activeTab, onTabChange }: Props) {
+export default function Header({ activeTab, onTabChange }: Props) {
   return (
     <header className="border-b border-white/5">
       <div className="mx-auto max-w-[1400px] px-6 py-4 flex items-center gap-6">
@@ -64,13 +65,6 @@ export default function Header({ totalStocks, activeTab, onTabChange }: Props) {
 
         {/* Right side stats */}
         <div className="ml-auto flex items-center gap-6">
-          <div className="text-right">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">Universe</div>
-            <div className="stat-num text-lg text-white font-semibold">
-              {totalStocks.toLocaleString()}
-              <span className="text-white/40 text-xs font-normal ml-1">stocks</span>
-            </div>
-          </div>
           <div className="text-right">
             <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">Source</div>
             <div className="stat-num text-sm text-accent font-medium">Yahoo Finance</div>
