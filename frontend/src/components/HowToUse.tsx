@@ -1,14 +1,15 @@
 /**
- * Landing / help page shown on first visit and reachable from the header.
+ * How to Use — the docs / reference tab for SignalDesk.
  *
- * Redesigned for motion: typed hero title, live time-based greeting,
- * scrolling market ticker, scroll-reveal sections, hover-lift cards,
- * scroll-progress bar and an animated candlestick preview.
+ * This is intentionally calmer than the Landing page: no ticker, no live
+ * chart, no scroll-progress bar. Focus is dense, scannable content that
+ * explains each screener's rules and the 8-step trade playbook.
  *
- * All animations respect `prefers-reduced-motion`.
+ * Motion is limited to subtle scroll-reveal + hover-lift on cards, and
+ * everything respects prefers-reduced-motion.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
 interface Props {
@@ -95,9 +96,8 @@ const Icons = {
   ),
 };
 
-/* ------------------------------ hooks -------------------------------- */
+/* ---------------------------- hooks --------------------------------- */
 
-/** Detects prefers-reduced-motion so we can gracefully disable animations. */
 function useReducedMotion(): boolean {
   const [prefers, setPrefers] = useState(false);
   useEffect(() => {
@@ -110,68 +110,26 @@ function useReducedMotion(): boolean {
   return prefers;
 }
 
-/** Reveal-on-scroll via IntersectionObserver. Returns [ref, visible]. */
 function useReveal<T extends HTMLElement>(): [(el: T | null) => void, boolean] {
   const [visible, setVisible] = useState(false);
   const ref = useRef<T | null>(null);
   const set = (el: T | null) => {
     ref.current = el;
     if (!el) return;
-    const obs = new IntersectionObserver(
-      entries => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            setVisible(true);
-            obs.disconnect();
-          }
+    const obs = new IntersectionObserver(entries => {
+      for (const e of entries) {
+        if (e.isIntersecting) {
+          setVisible(true);
+          obs.disconnect();
         }
-      },
-      { threshold: 0.15 },
-    );
+      }
+    }, { threshold: 0.15 });
     obs.observe(el);
   };
   return [set, visible];
 }
 
-/** Types out `text` one char at a time (skipped if reduced-motion). */
-function useTyped(text: string, speed = 45, reduced = false): string {
-  const [out, setOut] = useState(reduced ? text : '');
-  useEffect(() => {
-    if (reduced) {
-      setOut(text);
-      return;
-    }
-    let i = 0;
-    setOut('');
-    const iv = setInterval(() => {
-      i += 1;
-      setOut(text.slice(0, i));
-      if (i >= text.length) clearInterval(iv);
-    }, speed);
-    return () => clearInterval(iv);
-  }, [text, speed, reduced]);
-  return out;
-}
-
-/** Live time-of-day greeting (updates every minute). */
-function useGreeting(): string {
-  const compute = () => {
-    const h = new Date().getHours();
-    if (h < 5)  return 'Late night trader';
-    if (h < 12) return 'Good morning';
-    if (h < 17) return 'Good afternoon';
-    if (h < 21) return 'Good evening';
-    return 'Good night';
-  };
-  const [g, setG] = useState(compute);
-  useEffect(() => {
-    const iv = setInterval(() => setG(compute()), 60_000);
-    return () => clearInterval(iv);
-  }, []);
-  return g;
-}
-
-/* --------------------------- sub-components -------------------------- */
+/* -------------------------- sub-components -------------------------- */
 
 type SectionId = 'master' | 'trend' | 'vcp' | 'rvol' | 'trade' | 'donts' | 'routine';
 
@@ -187,46 +145,33 @@ const QUICK_CHIPS: Array<{ id: SectionId; label: string; color: string }> = [
 
 const chipClasses = (color: string): string => {
   switch (color) {
-    case 'accent': return 'border-accent/40 text-accent hover:bg-accent/10 hover:-translate-y-0.5';
-    case 'info':   return 'border-info/40   text-info   hover:bg-info/10   hover:-translate-y-0.5';
-    case 'purple': return 'border-purple-500/40 text-purple-300 hover:bg-purple-500/10 hover:-translate-y-0.5';
-    case 'warn':   return 'border-warn/40   text-warn   hover:bg-warn/10   hover:-translate-y-0.5';
-    case 'good':   return 'border-good/40   text-good   hover:bg-good/10   hover:-translate-y-0.5';
-    case 'bad':    return 'border-bad/40    text-bad    hover:bg-bad/10    hover:-translate-y-0.5';
+    case 'accent': return 'border-accent/40 text-accent hover:bg-accent/10';
+    case 'info':   return 'border-info/40   text-info   hover:bg-info/10';
+    case 'purple': return 'border-purple-500/40 text-purple-300 hover:bg-purple-500/10';
+    case 'warn':   return 'border-warn/40   text-warn   hover:bg-warn/10';
+    case 'good':   return 'border-good/40   text-good   hover:bg-good/10';
+    case 'bad':    return 'border-bad/40    text-bad    hover:bg-bad/10';
     default:       return 'border-white/15  text-white/70';
   }
 };
 
-/** Wraps a section with reveal-on-scroll (fade + translate). */
 function Reveal({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
   const reduced = useReducedMotion();
   const [setRef, visible] = useReveal<HTMLDivElement>();
-  const style: React.CSSProperties = reduced
-    ? {}
-    : {
-        transitionDelay: `${delay}ms`,
-        transform: visible ? 'translateY(0)' : 'translateY(20px)',
-        opacity: visible ? 1 : 0,
-      };
+  const style: React.CSSProperties = reduced ? {} : {
+    transitionDelay: `${delay}ms`,
+    transform: visible ? 'translateY(0)' : 'translateY(12px)',
+    opacity: visible ? 1 : 0,
+  };
   return (
-    <div
-      ref={setRef}
-      className={reduced ? '' : 'transition duration-700 ease-out will-change-transform will-change-opacity'}
-      style={style}
-    >
+    <div ref={setRef} className={reduced ? '' : 'transition duration-500 ease-out'} style={style}>
       {children}
     </div>
   );
 }
 
 function Section({
-  id,
-  icon,
-  title,
-  subtitle,
-  ring,
-  bg,
-  children,
+  id, icon, title, subtitle, ring, bg, children,
 }: {
   id: SectionId;
   icon: ReactNode;
@@ -237,18 +182,14 @@ function Section({
   children: ReactNode;
 }) {
   return (
-    <section id={id} className="panel p-5 md:p-6 space-y-3 scroll-mt-24 hover:border-white/20 transition">
+    <section id={id} className="panel p-5 md:p-6 space-y-3 scroll-mt-24 hover:border-white/15 transition">
       <div className="flex items-start gap-4">
-        <div
-          className={`shrink-0 w-11 h-11 md:w-12 md:h-12 rounded-2xl flex items-center justify-center border ${ring} ${bg} transition-transform duration-500 hover:rotate-3 hover:scale-105`}
-        >
+        <div className={`shrink-0 w-11 h-11 md:w-12 md:h-12 rounded-2xl flex items-center justify-center border ${ring} ${bg}`}>
           {icon}
         </div>
         <div className="min-w-0">
           <h2 className="text-lg md:text-xl font-semibold text-white leading-tight">{title}</h2>
-          {subtitle && (
-            <div className="text-[12px] text-white/50 mt-0.5">{subtitle}</div>
-          )}
+          {subtitle && <div className="text-[12px] text-white/50 mt-0.5">{subtitle}</div>}
         </div>
       </div>
       <div className="text-[13px] text-white/70 leading-relaxed space-y-3 pt-1">
@@ -269,10 +210,8 @@ function VerdictCard({
   text: string;
 }) {
   return (
-    <div
-      className={`group rounded-xl border ${ring} ${bg} p-3 flex items-start gap-3 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg`}
-    >
-      <div className={`shrink-0 w-8 h-8 rounded-lg border ${ring} bg-white/[0.02] flex items-center justify-center ${text} transition-transform duration-300 group-hover:rotate-6`}>
+    <div className={`rounded-xl border ${ring} ${bg} p-3 flex items-start gap-3 hover:-translate-y-0.5 transition`}>
+      <div className={`shrink-0 w-8 h-8 rounded-lg border ${ring} bg-white/[0.02] flex items-center justify-center ${text}`}>
         {icon}
       </div>
       <div className="min-w-0">
@@ -294,9 +233,9 @@ function RuleRow({ label, value }: { label: string; value: ReactNode }) {
 
 function Step({ n, title, children }: { n: number; title: string; children: ReactNode }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 hover:bg-white/[0.04] hover:-translate-y-0.5 hover:border-accent/30 transition-all duration-300">
+    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 hover:bg-white/[0.04] hover:-translate-y-0.5 hover:border-accent/30 transition">
       <div className="flex items-center gap-2 mb-2">
-        <div className="w-7 h-7 rounded-lg bg-accent/15 border border-accent/40 text-accent flex items-center justify-center text-[12px] font-bold stat-num transition-transform duration-300 hover:scale-110">
+        <div className="w-7 h-7 rounded-lg bg-accent/15 border border-accent/40 text-accent flex items-center justify-center text-[12px] font-bold stat-num">
           {n}
         </div>
         <div className="text-white font-semibold text-[13px]">{title}</div>
@@ -311,279 +250,40 @@ function scrollTo(id: string) {
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-/* ------------------------- Live-ish market ticker -------------------- */
-
-interface TickerItem { symbol: string; pct: number }
-const SEED_TICKER: TickerItem[] = [
-  { symbol: 'NIFTY',    pct: 0.42 },
-  { symbol: 'BANKNIFTY',pct: -0.15 },
-  { symbol: 'RELIANCE', pct: 1.10 },
-  { symbol: 'TCS',      pct: 0.75 },
-  { symbol: 'HDFCBANK', pct: -0.32 },
-  { symbol: 'INFY',     pct: 0.90 },
-  { symbol: 'ITC',      pct: 0.22 },
-  { symbol: 'LT',       pct: 1.55 },
-  { symbol: 'BAJFINANCE', pct: -0.68 },
-  { symbol: 'ADANIENT', pct: 2.10 },
-  { symbol: 'SBIN',     pct: 0.11 },
-  { symbol: 'ONGC',     pct: -0.44 },
-];
-
-function Ticker({ reduced }: { reduced: boolean }) {
-  const [items, setItems] = useState<TickerItem[]>(SEED_TICKER);
-  useEffect(() => {
-    if (reduced) return;
-    const iv = setInterval(() => {
-      setItems(prev =>
-        prev.map(it => ({
-          ...it,
-          pct: Number((it.pct + (Math.random() - 0.5) * 0.35).toFixed(2)),
-        })),
-      );
-    }, 2200);
-    return () => clearInterval(iv);
-  }, [reduced]);
-
-  const row = items.concat(items); // duplicate for seamless marquee
-
-  return (
-    <div className="relative overflow-hidden rounded-xl border border-white/10 bg-white/[0.02]">
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-bg to-transparent z-10" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-bg to-transparent z-10" />
-      <div
-        className={`flex items-center gap-6 py-2 whitespace-nowrap ${reduced ? '' : 'sd-marquee'}`}
-        style={{ animationDuration: '40s' }}
-      >
-        {row.map((it, idx) => {
-          const up = it.pct >= 0;
-          return (
-            <span key={idx} className="text-[11px] tracking-wide inline-flex items-center gap-2">
-              <span className="text-white/60 font-medium">{it.symbol}</span>
-              <span className={`stat-num font-semibold ${up ? 'text-good' : 'text-bad'}`}>
-                {up ? '+' : ''}{it.pct.toFixed(2)}%
-              </span>
-              <span className="text-white/15">•</span>
-            </span>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/* ---------------------- Animated candlestick chart ------------------- */
-
-interface Candle { o: number; h: number; l: number; c: number }
-function seedCandles(n: number): Candle[] {
-  const out: Candle[] = [];
-  let last = 100;
-  for (let i = 0; i < n; i++) {
-    const drift = (Math.random() - 0.5) * 2.4 + (i > n * 0.6 ? 0.6 : 0);
-    const o = last;
-    const c = Math.max(60, o + drift);
-    const h = Math.max(o, c) + Math.random() * 1.2;
-    const l = Math.min(o, c) - Math.random() * 1.2;
-    out.push({ o, h, l, c });
-    last = c;
-  }
-  return out;
-}
-
-function LiveChart({ reduced }: { reduced: boolean }) {
-  const [candles, setCandles] = useState<Candle[]>(() => seedCandles(24));
-  useEffect(() => {
-    if (reduced) return;
-    const iv = setInterval(() => {
-      setCandles(prev => {
-        const next = prev.slice(1);
-        const last = prev[prev.length - 1];
-        const drift = (Math.random() - 0.45) * 2.6;
-        const o = last.c;
-        const c = Math.max(60, o + drift);
-        const h = Math.max(o, c) + Math.random() * 1.2;
-        const l = Math.min(o, c) - Math.random() * 1.2;
-        next.push({ o, h, l, c });
-        return next;
-      });
-    }, 1200);
-    return () => clearInterval(iv);
-  }, [reduced]);
-
-  const { minY, maxY } = useMemo(() => {
-    let minY = Infinity, maxY = -Infinity;
-    for (const k of candles) { minY = Math.min(minY, k.l); maxY = Math.max(maxY, k.h); }
-    const pad = (maxY - minY) * 0.1 || 1;
-    return { minY: minY - pad, maxY: maxY + pad };
-  }, [candles]);
-
-  const W = 240, H = 120, N = candles.length;
-  const cw = W / N;
-  const cwBody = cw * 0.6;
-  const scaleY = (v: number): number => H - ((v - minY) / (maxY - minY)) * H;
-
-  const last = candles[N - 1];
-  const first = candles[0];
-  const chg = ((last.c - first.o) / first.o) * 100;
-
-  return (
-    <div className="w-[260px] h-[160px] rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.04] to-white/[0.02] p-4">
-      <div className="flex items-center justify-between">
-        <div className="text-[10px] uppercase tracking-[0.16em] text-white/40">
-          Live sample · SD/INR
-        </div>
-        <div className={`text-[10px] font-semibold ${chg >= 0 ? 'text-good' : 'text-bad'}`}>
-          {chg >= 0 ? '+' : ''}{chg.toFixed(2)}%
-        </div>
-      </div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="mt-2 w-full h-[110px]">
-        {candles.map((k, i) => {
-          const x = i * cw + (cw - cwBody) / 2;
-          const y1 = scaleY(k.h);
-          const y2 = scaleY(k.l);
-          const yo = scaleY(k.o);
-          const yc = scaleY(k.c);
-          const up = k.c >= k.o;
-          const color = up ? 'rgb(74 222 128)' : 'rgb(248 113 113)';
-          const bodyTop = Math.min(yo, yc);
-          const bodyH = Math.max(1.5, Math.abs(yc - yo));
-          return (
-            <g key={i}>
-              <line x1={x + cwBody / 2} x2={x + cwBody / 2} y1={y1} y2={y2} stroke={color} strokeWidth={1} />
-              <rect x={x} y={bodyTop} width={cwBody} height={bodyH} fill={color} rx={0.5} />
-            </g>
-          );
-        })}
-      </svg>
-    </div>
-  );
-}
-
-/* ------------------------------- page -------------------------------- */
+/* -------------------------------- page ------------------------------ */
 
 export default function HowToUse({ onGetStarted, fromNav }: Props) {
-  const reduced = useReducedMotion();
-  const greeting = useGreeting();
-  const typedTitle = useTyped('SignalDesk', 90, reduced);
-  const [progress, setProgress] = useState(0);
-
-  // Scroll progress bar
-  useEffect(() => {
-    const onScroll = () => {
-      const doc = document.documentElement;
-      const h = doc.scrollHeight - doc.clientHeight;
-      const p = h > 0 ? (doc.scrollTop / h) * 100 : 0;
-      setProgress(Math.max(0, Math.min(100, p)));
-    };
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
   return (
-    <main className="flex-1 space-y-6 max-w-[1100px] mx-auto px-2 sm:px-4 relative">
-      {/* scroll progress bar */}
-      <div className="pointer-events-none fixed left-0 right-0 top-0 h-[3px] z-40 bg-transparent">
-        <div
-          className="h-full bg-accent/80 transition-[width] duration-150"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-
-      {/* HERO */}
-      <section className="relative overflow-hidden panel p-6 md:p-10">
-        {/* animated gradient blobs */}
-        <div className="pointer-events-none absolute -top-20 -right-20 w-72 h-72 rounded-full bg-accent/20 blur-3xl animate-pulse" />
-        <div
-          className="pointer-events-none absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-info/20 blur-3xl animate-pulse"
-          style={{ animationDelay: '1.2s' }}
-        />
-        {/* faint moving grid overlay (CSS-only, respects reduced motion) */}
-        {!reduced && (
-          <div
-            className="pointer-events-none absolute inset-0 opacity-[0.06] sd-grid"
-            aria-hidden
-          />
-        )}
-
-        <div className="relative flex flex-col md:flex-row md:items-center gap-6">
-          <div className="flex-1 min-w-0">
-            <div className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 text-accent px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]">
-              <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-              AI-driven quant desk
-              <span className="text-white/40 font-normal tracking-normal normal-case ml-1">
-                · {greeting}
-              </span>
-            </div>
-
-            <h1 className="mt-3 text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-[1.05] tracking-tight">
-              Welcome to{' '}
-              <span className="text-accent whitespace-nowrap">
-                {typedTitle}
-                {!reduced && typedTitle.length < 'SignalDesk'.length && (
-                  <span className="inline-block w-[2px] h-[0.9em] align-middle bg-accent animate-pulse ml-1" />
-                )}
-              </span>
-            </h1>
-
-            <p className="mt-3 text-white/70 text-[14px] md:text-[15px] max-w-[640px]">
-              Your AI trading co-pilot for swing trading. Trend, volatility contraction and
-              relative volume — fused into one verdict per stock. The Minervini / IBD /
-              Weinstein playbook, automated.
+    <main className="flex-1 space-y-6 max-w-[1100px] mx-auto px-2 sm:px-4">
+      {/* Docs header */}
+      <section className="panel p-5 md:p-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <div className="text-[11px] uppercase tracking-[0.18em] text-white/40">Docs · Reference</div>
+            <h1 className="mt-1 text-xl md:text-2xl font-semibold text-white">How to use SignalDesk</h1>
+            <p className="mt-1 text-[13px] text-white/60 max-w-[680px]">
+              A quick reference for the four screeners and the exact playbook to trade the setups.
+              Skim the chips below, or read top-to-bottom.
             </p>
-
-            {/* hero stats */}
-            <div className="mt-5 grid grid-cols-3 gap-2 max-w-[520px]">
-              <div className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 hover:border-accent/30 transition">
-                <div className="text-[10px] uppercase tracking-[0.16em] text-white/40">Screens</div>
-                <div className="stat-num text-white text-lg font-semibold">4</div>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 hover:border-accent/30 transition">
-                <div className="text-[10px] uppercase tracking-[0.16em] text-white/40">Rules checked</div>
-                <div className="stat-num text-white text-lg font-semibold">8 + 15</div>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 hover:border-accent/30 transition">
-                <div className="text-[10px] uppercase tracking-[0.16em] text-white/40">Data</div>
-                <div className="stat-num text-white text-lg font-semibold">Daily</div>
-              </div>
-            </div>
-
-            <div className="mt-6 flex flex-wrap gap-2">
-              <button
-                onClick={onGetStarted}
-                className="h-11 px-5 rounded-xl bg-accent text-black font-semibold text-sm shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition inline-flex items-center gap-2"
-              >
-                {fromNav ? 'Back to Master screener' : 'Open Master screener'}
-                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4 transition-transform group-hover:translate-x-0.5">
-                  <path d="M4 10h11m-4-4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-              <a
-                href="#trade"
-                onClick={(e) => { e.preventDefault(); scrollTo('trade'); }}
-                className="h-11 px-4 rounded-xl border border-white/15 bg-white/[0.03] text-white/80 hover:bg-white/[0.08] hover:text-white text-sm font-medium inline-flex items-center gap-2 transition"
-              >
-                How to place a trade
-              </a>
-            </div>
           </div>
-
-          <div className="hidden md:block shrink-0">
-            <LiveChart reduced={reduced} />
-          </div>
+          <button
+            onClick={onGetStarted}
+            className="h-9 px-4 rounded-lg bg-accent text-black text-[12px] font-semibold shadow-glow hover:brightness-110 hover:-translate-y-0.5 transition inline-flex items-center gap-2 self-start md:self-auto"
+          >
+            {fromNav ? 'Back to Master' : 'Open Master'}
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-3.5 h-3.5">
+              <path d="M4 10h11m-4-4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
         </div>
 
-        {/* ticker */}
-        <div className="relative mt-6">
-          <Ticker reduced={reduced} />
-        </div>
-
-        {/* quick-nav chips */}
-        <div className="relative mt-4 flex flex-wrap gap-2">
+        {/* Quick-nav chips */}
+        <div className="mt-4 flex flex-wrap gap-2">
           {QUICK_CHIPS.map(c => (
             <button
               key={c.id}
               onClick={() => scrollTo(c.id)}
-              className={`px-3 h-8 rounded-full text-[11px] font-semibold border bg-white/[0.02] transition-all duration-200 ${chipClasses(c.color)}`}
+              className={`px-3 h-8 rounded-full text-[11px] font-semibold border bg-white/[0.02] transition ${chipClasses(c.color)}`}
             >
               {c.label}
             </button>
@@ -598,34 +298,25 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
           title="Master Screener"
           subtitle="Trend + VCP + RVOL fused into one verdict per stock"
           icon={<Icons.target className="w-6 h-6 text-accent" />}
-          ring="border-accent/40"
-          bg="bg-accent/10"
+          ring="border-accent/40" bg="bg-accent/10"
         >
           <p>
             Runs all three screeners against the same daily bars and gives you
             <strong className="text-white"> one verdict per stock</strong>:
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <VerdictCard
-              icon={<Icons.check className="w-4 h-4" />}
-              label="Ready to trade" desc="Everything aligned, breakout live"
-              ring="border-good/40" bg="bg-good/10" text="text-good"
-            />
-            <VerdictCard
-              icon={<Icons.eye className="w-4 h-4" />}
-              label="Watchlist" desc="Setup near, waiting on volume"
-              ring="border-info/40" bg="bg-info/10" text="text-info"
-            />
-            <VerdictCard
-              icon={<Icons.cog className="w-4 h-4" />}
-              label="Setup forming" desc="Base building, not yet actionable"
-              ring="border-accent/40" bg="bg-accent/10" text="text-accent"
-            />
-            <VerdictCard
-              icon={<Icons.pause className="w-4 h-4" />}
-              label="Hold off" desc="Stage 3 (topping), skip"
-              ring="border-warn/40" bg="bg-warn/10" text="text-warn"
-            />
+            <VerdictCard icon={<Icons.check className="w-4 h-4" />} label="Ready to trade"
+              desc="Everything aligned, breakout live"
+              ring="border-good/40" bg="bg-good/10" text="text-good" />
+            <VerdictCard icon={<Icons.eye className="w-4 h-4" />} label="Watchlist"
+              desc="Setup near, waiting on volume"
+              ring="border-info/40" bg="bg-info/10" text="text-info" />
+            <VerdictCard icon={<Icons.cog className="w-4 h-4" />} label="Setup forming"
+              desc="Base building, not yet actionable"
+              ring="border-accent/40" bg="bg-accent/10" text="text-accent" />
+            <VerdictCard icon={<Icons.pause className="w-4 h-4" />} label="Hold off"
+              desc="Stage 3 (topping), skip"
+              ring="border-warn/40" bg="bg-warn/10" text="text-warn" />
           </div>
           <p className="text-white/50">
             <strong className="text-white/80">Start here.</strong> This is the fastest way to see what's actually
@@ -641,8 +332,7 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
           title="Trend Template"
           subtitle="Minervini's 8 rules + Weinstein stages"
           icon={<Icons.trend className="w-6 h-6 text-info" />}
-          ring="border-info/40"
-          bg="bg-info/10"
+          ring="border-info/40" bg="bg-info/10"
         >
           <p>
             Mark Minervini's 8-rule uptrend check + Stan Weinstein's 4 stages of a market cycle.
@@ -673,8 +363,7 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
           title="VCP Screener"
           subtitle="Volatility Contraction Pattern — Minervini's entry setup"
           icon={<Icons.contract className="w-6 h-6 text-purple-300" />}
-          ring="border-purple-500/40"
-          bg="bg-purple-500/10"
+          ring="border-purple-500/40" bg="bg-purple-500/10"
         >
           <p>
             <strong className="text-white">Volatility Contraction Pattern</strong> finds stocks forming
@@ -709,8 +398,7 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
           title="RVOL Screener"
           subtitle="Relative volume — the confirmation filter on breakout day"
           icon={<Icons.bolt className="w-6 h-6 text-warn" />}
-          ring="border-warn/40"
-          bg="bg-warn/10"
+          ring="border-warn/40" bg="bg-warn/10"
         >
           <p>
             <strong className="text-white">Relative Volume</strong> — today's volume vs the 20-day
@@ -718,16 +406,16 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
             <strong className="text-good">confirmation filter</strong> on breakout day.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 font-mono text-[12px] text-white/70">
-            <div className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2 hover:border-white/20 transition">
+            <div className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2">
               RVOL &lt; 1.0x → below avg <span className="text-white/40">(skip)</span>
             </div>
-            <div className="rounded-lg border border-warn/20 bg-warn/[0.05] px-3 py-2 text-warn/90 hover:bg-warn/[0.09] transition">
+            <div className="rounded-lg border border-warn/20 bg-warn/[0.05] px-3 py-2 text-warn/90">
               RVOL 1.0-1.5x → normal (watch)
             </div>
-            <div className="rounded-lg border border-info/25 bg-info/[0.05] px-3 py-2 text-info/90 hover:bg-info/[0.09] transition">
+            <div className="rounded-lg border border-info/25 bg-info/[0.05] px-3 py-2 text-info/90">
               RVOL 1.5-2.0x → elevated (worth entering)
             </div>
-            <div className="rounded-lg border border-good/25 bg-good/[0.05] px-3 py-2 text-good/90 hover:bg-good/[0.09] transition">
+            <div className="rounded-lg border border-good/25 bg-good/[0.05] px-3 py-2 text-good/90">
               RVOL &gt; 2.0x → high conviction
             </div>
           </div>
@@ -745,8 +433,7 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
           title="How to actually place a trade"
           subtitle="A repeatable 8-step playbook"
           icon={<Icons.briefcase className="w-6 h-6 text-good" />}
-          ring="border-good/40"
-          bg="bg-good/10"
+          ring="border-good/40" bg="bg-good/10"
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <Step n={1} title="Run Master on Nifty 200">
@@ -788,8 +475,7 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
           title="What not to do"
           subtitle="The most common (and expensive) mistakes"
           icon={<Icons.ban className="w-6 h-6 text-bad" />}
-          ring="border-bad/40"
-          bg="bg-bad/10"
+          ring="border-bad/40" bg="bg-bad/10"
         >
           <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 text-white/70 text-[13px]">
             <li>Don't trade Stage 3 or Stage 4 stocks — even if the VCP looks perfect.</li>
@@ -809,8 +495,7 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
           title="Daily 10-minute routine"
           subtitle="Consistency beats intensity"
           icon={<Icons.clock className="w-6 h-6 text-info" />}
-          ring="border-info/40"
-          bg="bg-info/10"
+          ring="border-info/40" bg="bg-info/10"
         >
           <ol className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 list-decimal list-inside text-white/70 text-[13px]">
             <li>End of day: run <strong className="text-accent">Master</strong> on Nifty 500 — glance at breadth (Stage-2 count).</li>
@@ -827,7 +512,7 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
       <Reveal delay={60}>
         <section className="panel p-5 md:p-6 border-2 border-warn/40 bg-warn/[0.06] space-y-3">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl border border-warn/40 bg-warn/15 text-warn flex items-center justify-center transition-transform duration-500 hover:rotate-3">
+            <div className="w-11 h-11 rounded-2xl border border-warn/40 bg-warn/15 text-warn flex items-center justify-center">
               <Icons.warn className="w-6 h-6" />
             </div>
             <h2 className="text-lg md:text-xl font-semibold text-white">Important Disclaimer</h2>
@@ -862,19 +547,19 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
         </section>
       </Reveal>
 
-      {/* CTA */}
+      {/* Bottom CTA */}
       <div className="text-center py-6">
         <button
           onClick={onGetStarted}
           className="h-11 px-6 rounded-xl bg-accent text-black font-semibold text-sm shadow-glow hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 transition inline-flex items-center gap-2"
         >
-          {fromNav ? 'Back to Master screener' : 'Got it — take me to Master'}
+          {fromNav ? 'Back to Master screener' : 'Take me to Master'}
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={2.5} className="w-4 h-4">
             <path d="M4 10h11m-4-4l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
         <div className="text-[11px] text-white/40 mt-3">
-          Revisit this page any time from the <strong className="text-white/60">How to Use</strong> pill in the top nav.
+          Revisit this reference any time from the <strong className="text-white/60">Docs</strong> pill in the top nav.
         </div>
       </div>
     </main>

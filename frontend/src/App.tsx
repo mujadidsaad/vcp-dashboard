@@ -5,6 +5,7 @@ import FilterPanel from './components/FilterPanel';
 import ScanControls from './components/ScanControls';
 import ResultsGrid, { passesRvol } from './components/ResultsGrid';
 import HowToUse from './components/HowToUse';
+import LandingPage from './components/LandingPage';
 import MasterScreener from './components/master/MasterScreener';
 import RvolScreener from './components/rvol/RvolScreener';
 import TrendTemplateScreener from './components/trend/TrendTemplateScreener';
@@ -28,17 +29,22 @@ interface PersistedVcpScan {
 const HELP_SEEN_KEY = 'help-page-seen';
 
 export default function App() {
-  // First-time visitors land on the help page. On subsequent visits, open the Master tab.
+  // First-time visitors land on the marketing Home page. On subsequent visits,
+  // open the Master tab. The Docs tab is always available from the header pill.
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     try {
-      return localStorage.getItem(HELP_SEEN_KEY) === '1' ? 'master' : 'help';
+      return localStorage.getItem(HELP_SEEN_KEY) === '1' ? 'master' : 'home';
     } catch { return 'master'; }
   });
 
+  /** Mark the landing as "seen" and jump to the Master screener. */
   const dismissHelp = () => {
     try { localStorage.setItem(HELP_SEEN_KEY, '1'); } catch { /* ignore */ }
     setActiveTab('master');
   };
+
+  /** Jump to the Docs (How to Use) tab. Called from Landing "Read the docs". */
+  const openDocs = () => setActiveTab('help');
   const [config, setConfig] = useState<ConfigResponse | null>(null);
   const [universes, setUniverses] = useState<UniverseInfo[]>([]);
   const [selectedUniverse, setSelectedUniverse] = useState<string>('Nifty 50');
@@ -206,10 +212,18 @@ export default function App() {
       />
 
       <div className="mx-auto max-w-[1400px] px-6 py-6 flex flex-col lg:flex-row gap-5">
+        {activeTab === 'home' && (
+          <LandingPage
+            onGetStarted={dismissHelp}
+            onOpenDocs={openDocs}
+            fromNav={localStorage.getItem(HELP_SEEN_KEY) === '1'}
+          />
+        )}
+
         {activeTab === 'help' && (
           <HowToUse
             onGetStarted={dismissHelp}
-            fromNav={localStorage.getItem(HELP_SEEN_KEY) === '1'}
+            fromNav={true}
           />
         )}
 

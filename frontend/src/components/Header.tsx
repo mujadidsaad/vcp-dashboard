@@ -1,4 +1,4 @@
-export type Tab = 'help' | 'master' | 'vcp' | 'rvol' | 'trend' | 'watchlist' | 'analytics';
+export type Tab = 'home' | 'help' | 'master' | 'vcp' | 'rvol' | 'trend' | 'watchlist' | 'analytics';
 
 interface Props {
   /** Kept for backwards-compatibility with App.tsx; not rendered in the header anymore. */
@@ -8,11 +8,12 @@ interface Props {
 }
 
 const TABS: Array<{ id: Tab; label: string; enabled: boolean }> = [
-  { id: 'master',    label: 'Master',       enabled: true  },
+  { id: 'home',      label: 'Home',            enabled: true  },
+  { id: 'master',    label: 'Master',          enabled: true  },
   { id: 'vcp',       label: 'VCP Screener',    enabled: true  },
   { id: 'rvol',      label: 'RVOL Screener',   enabled: true  },
   { id: 'trend',     label: 'Trend Template',  enabled: true  },
-  { id: 'help',      label: 'How to Use',   enabled: true  },
+  { id: 'help',      label: 'Docs',            enabled: true  },
   { id: 'watchlist', label: 'Watchlist',       enabled: false },
   { id: 'analytics', label: 'Analytics',       enabled: false },
 ];
