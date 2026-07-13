@@ -177,7 +177,7 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
           <li>
             Confirm entry with:
             <div className="ml-4 mt-1 text-[12px] text-white/60">
-              • RVOL ≥ 1.5x &nbsp;• Chg% > +2% &nbsp;• Strong Start *
+              • RVOL ≥ 1.5x &nbsp;• Chg% {'>'} +2% &nbsp;• Strong Start *
             </div>
           </li>
           <li>
