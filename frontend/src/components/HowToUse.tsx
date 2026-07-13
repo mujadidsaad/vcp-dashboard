@@ -329,7 +329,7 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
       <Reveal delay={40}>
         <Section
           id="trend"
-          title="Trend Template"
+          title="Trend Screener"
           subtitle="Minervini's 8 rules + Weinstein stages"
           icon={<Icons.trend className="w-6 h-6 text-info" />}
           ring="border-info/40" bg="bg-info/10"

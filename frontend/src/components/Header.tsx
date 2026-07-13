@@ -9,10 +9,10 @@ interface Props {
 
 const TABS: Array<{ id: Tab; label: string; enabled: boolean }> = [
   { id: 'home',      label: 'Home',            enabled: true  },
-  { id: 'master',    label: 'Master',          enabled: true  },
+  { id: 'master',    label: 'Master Screener', enabled: true  },
   { id: 'vcp',       label: 'VCP Screener',    enabled: true  },
   { id: 'rvol',      label: 'RVOL Screener',   enabled: true  },
-  { id: 'trend',     label: 'Trend Template',  enabled: true  },
+  { id: 'trend',     label: 'Trend Screener',  enabled: true  },
   { id: 'help',      label: 'Docs',            enabled: true  },
   { id: 'watchlist', label: 'Watchlist',       enabled: false },
   { id: 'analytics', label: 'Analytics',       enabled: false },

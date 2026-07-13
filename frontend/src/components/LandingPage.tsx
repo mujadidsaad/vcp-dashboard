@@ -1,4 +1,4 @@
-/**
+ /**
  * SignalDesk landing page.
  *
  * First page shown on first visit and available under the "Home" pill.
@@ -554,7 +554,7 @@ function WhatYouGet({
   const specs: FeatureSpec[] = useMemo(() => [
     {
       key: 'master',
-      title: 'Master',
+      title: 'Master Screener',
       tagline: 'One verdict per stock: READY, WATCH, SETUP, HOLD or SKIP.',
       ring: 'border-accent/40', bg: 'bg-accent/10', text: 'text-accent',
       icon: <Icons.target className="w-5 h-5" />,
@@ -570,7 +570,7 @@ function WhatYouGet({
     },
     {
       key: 'trend',
-      title: 'Trend',
+      title: 'Trend Screener',
       tagline: 'Minervini\'s 8 rules + Weinstein stages. Only Stage 2 trades.',
       ring: 'border-info/40', bg: 'bg-info/10', text: 'text-info',
       icon: <Icons.trend className="w-5 h-5" />,
@@ -586,7 +586,7 @@ function WhatYouGet({
     },
     {
       key: 'vcp',
-      title: 'VCP',
+      title: 'VCP Screener',
       tagline: 'Volatility contraction — tight bases with volume drying up.',
       ring: 'border-purple-500/40', bg: 'bg-purple-500/10', text: 'text-purple-300',
       icon: <Icons.contract className="w-5 h-5" />,
@@ -602,7 +602,7 @@ function WhatYouGet({
     },
     {
       key: 'rvol',
-      title: 'RVOL',
+      title: 'RVOL Screener',
       tagline: 'Relative volume + Strong Start — confirmation on breakout day.',
       ring: 'border-warn/40', bg: 'bg-warn/10', text: 'text-warn',
       icon: <Icons.bolt className="w-5 h-5" />,
