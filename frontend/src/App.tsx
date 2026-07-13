@@ -4,6 +4,7 @@ import Header, { type Tab } from './components/Header';
 import FilterPanel from './components/FilterPanel';
 import ScanControls from './components/ScanControls';
 import ResultsGrid, { passesRvol } from './components/ResultsGrid';
+import HowToUse from './components/HowToUse';
 import MasterScreener from './components/master/MasterScreener';
 import RvolScreener from './components/rvol/RvolScreener';
 import TrendTemplateScreener from './components/trend/TrendTemplateScreener';
@@ -24,8 +25,20 @@ interface PersistedVcpScan {
   selectedUniverse: string;
 }
 
+const HELP_SEEN_KEY = 'help-page-seen';
+
 export default function App() {
-  const [activeTab, setActiveTab] = useState<Tab>('master');
+  // First-time visitors land on the help page. On subsequent visits, open the Master tab.
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    try {
+      return localStorage.getItem(HELP_SEEN_KEY) === '1' ? 'master' : 'help';
+    } catch { return 'master'; }
+  });
+
+  const dismissHelp = () => {
+    try { localStorage.setItem(HELP_SEEN_KEY, '1'); } catch { /* ignore */ }
+    setActiveTab('master');
+  };
   const [config, setConfig] = useState<ConfigResponse | null>(null);
   const [universes, setUniverses] = useState<UniverseInfo[]>([]);
   const [selectedUniverse, setSelectedUniverse] = useState<string>('Nifty 50');
@@ -193,6 +206,13 @@ export default function App() {
       />
 
       <div className="mx-auto max-w-[1400px] px-6 py-6 flex flex-col lg:flex-row gap-5">
+        {activeTab === 'help' && (
+          <HowToUse
+            onGetStarted={dismissHelp}
+            fromNav={localStorage.getItem(HELP_SEEN_KEY) === '1'}
+          />
+        )}
+
         {activeTab === 'master' && (
           <MasterScreener universes={universes} />
         )}

@@ -1,4 +1,4 @@
-export type Tab = 'master' | 'vcp' | 'rvol' | 'trend' | 'watchlist' | 'analytics';
+export type Tab = 'help' | 'master' | 'vcp' | 'rvol' | 'trend' | 'watchlist' | 'analytics';
 
 interface Props {
   totalStocks: number;
@@ -11,6 +11,7 @@ const TABS: Array<{ id: Tab; label: string; enabled: boolean }> = [
   { id: 'vcp',       label: 'VCP Screener',    enabled: true  },
   { id: 'rvol',      label: 'RVOL Screener',   enabled: true  },
   { id: 'trend',     label: 'Trend Template',  enabled: true  },
+  { id: 'help',      label: '📖 How to Use',   enabled: true  },
   { id: 'watchlist', label: 'Watchlist',       enabled: false },
   { id: 'analytics', label: 'Analytics',       enabled: false },
 ];
