@@ -30,7 +30,7 @@ export default function Header({ totalStocks, activeTab, onTabChange }: Props) {
           <div className="leading-none">
             <div className="text-white font-semibold tracking-tight">Signal<span className="text-accent">Desk</span></div>
             <div className="text-[10px] uppercase tracking-[0.16em] text-white/40 mt-0.5">
-              Your AI trading desk for Indian markets
+              Your AI trading co-pilot for swing trading
             </div>
           </div>
         </div>

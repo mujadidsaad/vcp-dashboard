@@ -261,9 +261,9 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
               Welcome to <span className="text-accent">SignalDesk</span>
             </h1>
             <p className="mt-3 text-white/70 text-[14px] md:text-[15px] max-w-[640px]">
-              Your AI trading desk for Indian markets. Trend, volatility contraction and relative
-              volume — fused into one verdict per stock. The Minervini / IBD / Weinstein playbook,
-              automated.
+              Your AI trading co-pilot for swing trading. Trend, volatility contraction and
+              relative volume — fused into one verdict per stock. The Minervini / IBD / Weinstein
+              playbook, automated.
             </p>
 
             {/* hero stats */}
