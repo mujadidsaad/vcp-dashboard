@@ -38,3 +38,23 @@ class TrendTemplateScanRequest(BaseModel):
     # Accepts either a Yahoo ticker (e.g. "^NSEI") or a plain symbol+exchange.
     benchmarkSymbol: str = "^NSEI"
     benchmarkExchange: str = "NSE"
+
+
+class MasterScanRequest(BaseModel):
+    """Request body for POST /api/scan/master.
+
+    Runs Trend Template + VCP + RVOL against the SAME daily bars per symbol
+    so we don't triple-hit Yahoo. Returns one combined result with a
+    computed `verdict` label.
+    """
+    symbols: List[StockRow]
+    benchmarkSymbol: str = "^NSEI"
+    benchmarkExchange: str = "NSE"
+    # RVOL lookback window (days). Matches RvolScanRequest default.
+    rvolLookback: int = 20
+    # Verdict thresholds — see backend/app/master.py for what they mean.
+    readyRvol: float = 1.5
+    watchlistRvol: float = 1.0
+    requireStrongStart: bool = False
+    # Optional VCP filter overrides. If None the backend DEFAULT_FILTERS is used.
+    vcpFilters: Optional[Dict[str, Any]] = None

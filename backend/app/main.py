@@ -23,8 +23,10 @@ from .config import (
 )
 from .data_source import fetch_bars
 from .logging_config import scan_logger, setup_logging
+from .master import analyze_master
 from .rvol import analyze_rvol
 from .schemas import (
+    MasterScanRequest,
     RvolScanRequest,
     ScanRequest,
     SingleScanRequest,
@@ -483,6 +485,161 @@ async def scan_trend_template_stream(req: TrendTemplateScanRequest):
             "ok": ok_count,
             "errors": err_count,
             "stage2": stage2_count,
+        })
+
+    return EventSourceResponse(event_generator())
+
+
+# ---------- Master screener (SSE) — Trend + VCP + RVOL fused --------------
+
+async def _process_one_master(
+    symbol: str,
+    exchange: str,
+    bench_ret_6m: Optional[float],
+    master_cfg: dict,
+):
+    """Fetch daily bars once, then run Trend Template + VCP + RVOL together."""
+    yahoo_symbol = to_yahoo_symbol(symbol, exchange)
+    t0 = time.perf_counter()
+    try:
+        bars = await _fetch_with_retry(yahoo_symbol, "1d")
+        if bars.empty:
+            alt = alternate_exchange(exchange)
+            alt_symbol = to_yahoo_symbol(symbol, alt)
+            if alt_symbol != yahoo_symbol:
+                bars = await _fetch_with_retry(alt_symbol, "1d")
+                if not bars.empty:
+                    yahoo_symbol = alt_symbol
+        dur_ms = (time.perf_counter() - t0) * 1000
+        if bars.empty:
+            slog.warning("MASTER ✗ %-14s dur=%6.1fms → data unavailable", yahoo_symbol, dur_ms)
+            return "error", {"symbol": symbol, "reason": "Data unavailable"}
+
+        result = await asyncio.to_thread(
+            analyze_master, symbol, yahoo_symbol, bars, bench_ret_6m, master_cfg,
+        )
+        slog.info(
+            "MASTER ✓ %-14s dur=%6.1fms verdict=%-16s stage=%d vcp=%-14s rvol=%5.2fx chg=%+5.2f%%",
+            yahoo_symbol, dur_ms,
+            result.get("verdict", "-"),
+            result.get("stage", 0),
+            result.get("vcpGrade", "-"),
+            result.get("rvolValue", 0.0),
+            result.get("chgPct", 0.0),
+        )
+        return "result", result
+    except Exception as e:
+        dur_ms = (time.perf_counter() - t0) * 1000
+        slog.error("MASTER ✗ %-14s dur=%6.1fms → %s", yahoo_symbol, dur_ms, e)
+        return "error", {"symbol": symbol, "reason": f"Error: {e}"}
+
+
+@app.post("/api/scan/master")
+async def scan_master_stream(req: MasterScanRequest):
+    """Server-Sent Events stream for the master screener.
+
+    Runs Trend Template + VCP + RVOL against the same daily bars per symbol.
+    Emits a `benchmark` event first (with the 6M benchmark return), then
+    per-symbol `progress` / `result` / `error` events, then `done` with a
+    per-verdict breakdown.
+    """
+    symbols = req.symbols
+    bench_yahoo = _resolve_benchmark_yahoo(req.benchmarkSymbol, req.benchmarkExchange)
+
+    master_cfg: dict[str, Any] = {
+        "readyRvol":          float(req.readyRvol),
+        "watchlistRvol":      float(req.watchlistRvol),
+        "requireStrongStart": bool(req.requireStrongStart),
+        "rvolLookback":       int(req.rvolLookback),
+        "vcpFilters":         req.vcpFilters or DEFAULT_FILTERS,
+    }
+
+    slog.info("=" * 60)
+    slog.info(
+        "MASTER SCAN START · benchmark=%s · symbols=%d · batch=%d · readyRvol=%.2f",
+        bench_yahoo, len(symbols), BATCH_SIZE, master_cfg["readyRvol"],
+    )
+    scan_started = time.perf_counter()
+
+    # Fetch benchmark once and cache its 6M return.
+    bench_bars = await _fetch_with_retry(bench_yahoo, "1d")
+    if bench_bars.empty:
+        slog.warning("MASTER benchmark %s returned no data — Trend rule c8 will be False", bench_yahoo)
+        bench_ret_6m: Optional[float] = None
+    else:
+        bench_ret_6m = compute_return_6m(bench_bars)
+        slog.info(
+            "MASTER benchmark %s 6M return = %+6.2f%% (bars=%d)",
+            bench_yahoo,
+            (bench_ret_6m or 0.0) * 100.0,
+            len(bench_bars),
+        )
+
+    ok_count = 0
+    err_count = 0
+    verdict_counts: dict[str, int] = {}
+
+    async def event_generator():
+        nonlocal ok_count, err_count
+        total = len(symbols)
+        processed = 0
+
+        # Announce the benchmark up-front.
+        yield _sse("benchmark", {
+            "benchmarkSymbol": bench_yahoo,
+            "return6m": (bench_ret_6m if bench_ret_6m is not None else 0.0),
+            "available": bench_ret_6m is not None,
+        })
+
+        for i in range(0, total, BATCH_SIZE):
+            batch = symbols[i:i + BATCH_SIZE]
+
+            for j, row in enumerate(batch):
+                yield _sse("progress", {
+                    "current": processed + j + 1,
+                    "total": total,
+                    "symbol": to_yahoo_symbol(row.symbol, row.exchange),
+                })
+
+            tasks = [
+                _process_one_master(row.symbol, row.exchange, bench_ret_6m, master_cfg)
+                for row in batch
+            ]
+            results = await asyncio.gather(*tasks, return_exceptions=False)
+
+            batch_ok = batch_err = 0
+            for (kind, payload) in results:
+                yield _sse(kind, payload)
+                if kind == "result":
+                    ok_count += 1
+                    batch_ok += 1
+                    v = payload.get("verdict", "-")
+                    verdict_counts[v] = verdict_counts.get(v, 0) + 1
+                else:
+                    err_count += 1
+                    batch_err += 1
+
+            processed += len(batch)
+            slog.info(
+                "  MASTER batch %3d-%3d/%d · ok=%d err=%d · verdicts=%s",
+                processed - len(batch) + 1, processed, total,
+                batch_ok, batch_err, verdict_counts,
+            )
+
+            await asyncio.sleep(BATCH_PAUSE)
+
+        elapsed = time.perf_counter() - scan_started
+        slog.info(
+            "MASTER SCAN DONE · total=%d · ok=%d · err=%d · verdicts=%s · elapsed=%.1fs",
+            total, ok_count, err_count, verdict_counts, elapsed,
+        )
+        slog.info("=" * 60)
+        yield _sse("done", {
+            "total": total,
+            "processed": processed,
+            "ok": ok_count,
+            "errors": err_count,
+            "verdictCounts": verdict_counts,
         })
 
     return EventSourceResponse(event_generator())

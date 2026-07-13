@@ -1,6 +1,8 @@
 import type {
   ConfigResponse,
   FilterConfig,
+  MasterConfig,
+  MasterResult,
   RvolResult,
   StockRow,
   TrendTemplateBenchmark,
@@ -171,6 +173,42 @@ export async function startTrendTemplateScan(
   return consumeSse<TrendTemplateResult>(
     `${BASE}/api/scan/trend-template`,
     { symbols, benchmarkSymbol, benchmarkExchange },
+    {
+      ...rest,
+      extraEvents: {
+        ...(extraEvents ?? {}),
+        benchmark: (p: TrendTemplateBenchmark) => onBenchmark?.(p),
+      },
+    },
+    signal,
+  );
+}
+
+/** POST /api/scan/master (Master screener — fuses Trend + VCP + RVOL, SSE).
+ *
+ * Emits `benchmark` first, then per-symbol `progress`/`result`/`error`, then
+ * `done` with a per-verdict breakdown.
+ */
+export async function startMasterScan(
+  symbols: StockRow[],
+  cfg: MasterConfig,
+  events: ScanEvents<MasterResult> & {
+    onBenchmark?: (b: TrendTemplateBenchmark) => void;
+  },
+  signal?: AbortSignal
+): Promise<void> {
+  const { onBenchmark, extraEvents, ...rest } = events;
+  return consumeSse<MasterResult>(
+    `${BASE}/api/scan/master`,
+    {
+      symbols,
+      benchmarkSymbol:     cfg.benchmarkSymbol,
+      benchmarkExchange:   'NSE',
+      rvolLookback:        cfg.rvolLookback,
+      readyRvol:           cfg.readyRvol,
+      watchlistRvol:       cfg.watchlistRvol,
+      requireStrongStart:  cfg.requireStrongStart,
+    },
     {
       ...rest,
       extraEvents: {

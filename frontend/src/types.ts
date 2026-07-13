@@ -174,3 +174,62 @@ export interface TrendTemplateConfig {
   stageFilter: Array<1 | 2 | 3 | 4>;
   sortBy: TrendSortMode;
 }
+
+// ============ Master Screener (fuses Trend + VCP + RVOL) ============
+
+export type MasterVerdict =
+  | 'READY TO TRADE'
+  | 'WATCHLIST'
+  | 'SETUP FORMING'
+  | 'HOLD OFF'
+  | 'SKIP';
+
+/**
+ * Result from POST /api/scan/master. Combines the three underlying analyzers
+ * and adds a `verdict` label + rank for quick sorting.
+ */
+export interface MasterResult {
+  symbol: string;
+  yahooSymbol: string;
+  analysisDate: string;
+
+  verdict: MasterVerdict;
+  verdictRank: number;   // 100=READY, 80=WATCHLIST, 60=SETUP, 40=HOLD, 20=SKIP
+  reason: string;
+
+  // Nested full payloads (for detail popovers / drill-in).
+  trend: TrendTemplateResult | null;
+  vcp:   VCPResult | null;
+  rvol:  RvolResult | null;
+
+  // Flat convenience fields for the results table + sorting.
+  stage: 0 | 1 | 2 | 3 | 4;
+  trendScore: number;   // 0..8
+  vcpGrade: string;
+  vcpScore: number;     // 0..100
+  rvolValue: number;    // ratio (e.g. 2.15)
+  chgPct: number;       // today's %
+  strongStart: boolean;
+  close: number;
+  rsVsBench: number;    // decimal: e.g. 0.184 = +18.4%
+}
+
+export type MasterSortMode = 'Verdict' | 'RVOL' | 'RS' | 'VCP' | 'Symbol';
+
+/** Verdict presets exposed in the master screener control bar. */
+export type MasterPreset = 'Conservative' | 'Balanced' | 'Aggressive' | 'Custom';
+
+/** Per-user UI preferences for the master screener. */
+export interface MasterConfig {
+  benchmarkSymbol: string;
+  /** Which verdicts to show in the table. */
+  verdictFilter: MasterVerdict[];
+  sortBy: MasterSortMode;
+  preset: MasterPreset;
+
+  /** Thresholds passed to the backend `analyze_master`. */
+  readyRvol: number;
+  watchlistRvol: number;
+  requireStrongStart: boolean;
+  rvolLookback: number;
+}

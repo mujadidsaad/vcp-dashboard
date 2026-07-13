@@ -4,6 +4,7 @@ import Header, { type Tab } from './components/Header';
 import FilterPanel from './components/FilterPanel';
 import ScanControls from './components/ScanControls';
 import ResultsGrid, { passesRvol } from './components/ResultsGrid';
+import MasterScreener from './components/master/MasterScreener';
 import RvolScreener from './components/rvol/RvolScreener';
 import TrendTemplateScreener from './components/trend/TrendTemplateScreener';
 import { applyVcpFilterSort, downloadCsv, vcpToCsv } from './components/vcpCsv';
@@ -24,7 +25,7 @@ interface PersistedVcpScan {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<Tab>('vcp');
+  const [activeTab, setActiveTab] = useState<Tab>('master');
   const [config, setConfig] = useState<ConfigResponse | null>(null);
   const [universes, setUniverses] = useState<UniverseInfo[]>([]);
   const [selectedUniverse, setSelectedUniverse] = useState<string>('Nifty 50');
@@ -192,6 +193,10 @@ export default function App() {
       />
 
       <div className="mx-auto max-w-[1400px] px-6 py-6 flex flex-col lg:flex-row gap-5">
+        {activeTab === 'master' && (
+          <MasterScreener universes={universes} />
+        )}
+
         {activeTab === 'vcp' && (
           <>
             <FilterPanel
