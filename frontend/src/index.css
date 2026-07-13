@@ -93,3 +93,36 @@ input[type='range']::-moz-range-thumb {
   height: 1px; width: 100%;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
 }
+
+/* -------- SignalDesk motion helpers -------- */
+
+/* Seamless marquee: content is doubled in DOM, translate by -50% */
+@keyframes sd-marquee-kf {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.sd-marquee {
+  animation: sd-marquee-kf linear infinite;
+  animation-duration: 40s;
+  will-change: transform;
+}
+
+/* Faint moving grid overlay used behind the hero */
+.sd-grid {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.35) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.35) 1px, transparent 1px);
+  background-size: 28px 28px, 28px 28px;
+  background-position: 0 0, 0 0;
+  animation: sd-grid-kf 16s linear infinite;
+  will-change: background-position;
+}
+@keyframes sd-grid-kf {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 28px 28px, 28px 28px; }
+}
+
+/* Respect user preference: disable motion helpers */
+@media (prefers-reduced-motion: reduce) {
+  .sd-marquee, .sd-grid { animation: none !important; }
+}
