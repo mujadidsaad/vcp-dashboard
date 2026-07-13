@@ -1,3 +1,4 @@
+import AsOfPicker from '../AsOfPicker';
 import type { TrendTemplateConfig, TrendTemplateResult, TrendSortMode } from '../../types';
 import type { UniverseInfo } from '../../api';
 
@@ -176,6 +177,11 @@ export default function TrendControls(p: Props) {
           value={c.benchmarkSymbol}
           onChange={v => p.onCfg({ ...c, benchmarkSymbol: v })}
           options={BENCHMARK_OPTIONS}
+        />
+        <AsOfPicker
+          value={c.asOf}
+          onChange={asOf => p.onCfg({ ...c, asOf })}
+          compact
         />
         <NumberField
           label="Min Score"

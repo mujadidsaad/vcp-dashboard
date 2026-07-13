@@ -111,6 +111,7 @@ export default function TrendTemplateScreener({ universes }: Props) {
         stocks,
         cfg.benchmarkSymbol,
         'NSE',
+        cfg.asOf,
         {
           onBenchmark: b => setBenchmark(b),
           onProgress: p => flushSync(() => {

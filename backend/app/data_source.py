@@ -78,3 +78,35 @@ def fetch_bars(yahoo_symbol: str, timeframe: str, retries: int = 2) -> pd.DataFr
         df = aggregate_4h(df)
 
     return df
+
+
+def slice_to_date(bars: pd.DataFrame, as_of: str | None) -> pd.DataFrame:
+    """Return a copy of `bars` keeping only rows where `date <= as_of`.
+
+    Used by the "backtest" feature — it lets us re-run any screener as if the
+    scan were happening on `as_of` (a YYYY-MM-DD date). If `as_of` is None,
+    empty, or invalid, the original DataFrame is returned unchanged.
+    """
+    if bars is None or bars.empty or not as_of:
+        return bars
+    try:
+        cutoff = pd.Timestamp(as_of)
+    except Exception:
+        return bars
+    if "date" not in bars.columns:
+        return bars
+
+    # Normalise both sides to timezone-naive dates for a robust comparison,
+    # since yfinance returns tz-aware timestamps for some intervals.
+    dates = pd.to_datetime(bars["date"], errors="coerce")
+    try:
+        dates = dates.dt.tz_localize(None)
+    except (AttributeError, TypeError):
+        pass
+    try:
+        cutoff = cutoff.tz_localize(None)
+    except (AttributeError, TypeError):
+        pass
+
+    mask = dates <= cutoff
+    return bars.loc[mask].reset_index(drop=True)

@@ -133,7 +133,7 @@ export async function startScan(
 ): Promise<void> {
   return consumeSse<VCPResult>(
     `${BASE}/api/scan`,
-    { symbols, filters, timeframe },
+    { symbols, filters, timeframe, asOf: filters.asOf },
     events,
     signal,
   );
@@ -143,12 +143,13 @@ export async function startScan(
 export async function startRvolScan(
   symbols: StockRow[],
   lookback: number,
+  asOf: string | undefined,
   events: ScanEvents<RvolResult>,
   signal?: AbortSignal
 ): Promise<void> {
   return consumeSse<RvolResult>(
     `${BASE}/api/scan/rvol`,
-    { symbols, lookback },
+    { symbols, lookback, asOf },
     events,
     signal,
   );
@@ -164,6 +165,7 @@ export async function startTrendTemplateScan(
   symbols: StockRow[],
   benchmarkSymbol: string,
   benchmarkExchange: string,
+  asOf: string | undefined,
   events: ScanEvents<TrendTemplateResult> & {
     onBenchmark?: (b: TrendTemplateBenchmark) => void;
   },
@@ -172,7 +174,7 @@ export async function startTrendTemplateScan(
   const { onBenchmark, extraEvents, ...rest } = events;
   return consumeSse<TrendTemplateResult>(
     `${BASE}/api/scan/trend-template`,
-    { symbols, benchmarkSymbol, benchmarkExchange },
+    { symbols, benchmarkSymbol, benchmarkExchange, asOf },
     {
       ...rest,
       extraEvents: {
@@ -208,6 +210,7 @@ export async function startMasterScan(
       readyRvol:           cfg.readyRvol,
       watchlistRvol:       cfg.watchlistRvol,
       requireStrongStart:  cfg.requireStrongStart,
+      asOf:                cfg.asOf,
     },
     {
       ...rest,

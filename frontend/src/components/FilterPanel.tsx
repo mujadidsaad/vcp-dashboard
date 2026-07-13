@@ -1,3 +1,4 @@
+import AsOfPicker from './AsOfPicker';
 import type { FilterConfig, RvolFilter, Timeframe } from '../types';
 
 interface Props {
@@ -64,6 +65,11 @@ export default function FilterPanel(p: Props) {
           ))}
         </select>
       </Section>
+
+      <AsOfPicker
+        value={c.asOf}
+        onChange={asOf => p.onFilters({ ...c, asOf })}
+      />
 
       <Section title="Timeframe">
         <div className="grid grid-cols-4 gap-1.5">

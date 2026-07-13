@@ -13,6 +13,8 @@ class ScanRequest(BaseModel):
     symbols: List[StockRow]
     filters: Dict[str, Any] = Field(default_factory=dict)
     timeframe: str = "1d"
+    # Optional YYYY-MM-DD backtest cutoff — see docs at slice_to_date().
+    asOf: Optional[str] = None
 
 
 class SingleScanRequest(BaseModel):
@@ -20,11 +22,13 @@ class SingleScanRequest(BaseModel):
     exchange: str = "NSE"
     timeframe: str = "1d"
     filters: Optional[Dict[str, Any]] = None
+    asOf: Optional[str] = None
 
 
 class RvolScanRequest(BaseModel):
     symbols: List[StockRow]
     lookback: int = 20
+    asOf: Optional[str] = None
 
 
 class TrendTemplateScanRequest(BaseModel):
@@ -38,6 +42,7 @@ class TrendTemplateScanRequest(BaseModel):
     # Accepts either a Yahoo ticker (e.g. "^NSEI") or a plain symbol+exchange.
     benchmarkSymbol: str = "^NSEI"
     benchmarkExchange: str = "NSE"
+    asOf: Optional[str] = None
 
 
 class MasterScanRequest(BaseModel):
@@ -58,3 +63,6 @@ class MasterScanRequest(BaseModel):
     requireStrongStart: bool = False
     # Optional VCP filter overrides. If None the backend DEFAULT_FILTERS is used.
     vcpFilters: Optional[Dict[str, Any]] = None
+    # Optional YYYY-MM-DD backtest cutoff. When set, all analyzers see only
+    # bars up to and including this date.
+    asOf: Optional[str] = None

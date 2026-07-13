@@ -1,3 +1,4 @@
+import AsOfPicker from '../AsOfPicker';
 import type {
   MasterConfig,
   MasterPreset,
@@ -197,6 +198,11 @@ export default function MasterControls(p: Props) {
           value={c.benchmarkSymbol}
           onChange={v => p.onCfg({ ...c, benchmarkSymbol: v })}
           options={BENCHMARK_OPTIONS}
+        />
+        <AsOfPicker
+          value={c.asOf}
+          onChange={asOf => p.onCfg({ ...c, asOf })}
+          compact
         />
         <LabeledSelect<MasterPreset>
           label="Preset"

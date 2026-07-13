@@ -21,7 +21,7 @@ from .config import (
     alternate_exchange,
     to_yahoo_symbol,
 )
-from .data_source import fetch_bars
+from .data_source import fetch_bars, slice_to_date
 from .logging_config import scan_logger, setup_logging
 from .master import analyze_master
 from .rvol import analyze_rvol
@@ -114,12 +114,12 @@ def get_universes() -> dict[str, Any]:
 def scan_single(req: SingleScanRequest) -> dict[str, Any]:
     filters = req.filters or DEFAULT_FILTERS
     yahoo_symbol = to_yahoo_symbol(req.symbol, req.exchange)
-    bars = fetch_bars(yahoo_symbol, req.timeframe)
+    bars = slice_to_date(fetch_bars(yahoo_symbol, req.timeframe), req.asOf)
     if bars.empty:
         alt = alternate_exchange(req.exchange)
         alt_symbol = to_yahoo_symbol(req.symbol, alt)
         if alt_symbol != yahoo_symbol:
-            bars = fetch_bars(alt_symbol, req.timeframe)
+            bars = slice_to_date(fetch_bars(alt_symbol, req.timeframe), req.asOf)
             if not bars.empty:
                 yahoo_symbol = alt_symbol
     if bars.empty:
@@ -152,18 +152,18 @@ async def _fetch_with_retry(yahoo_symbol: str, timeframe: str):
     return bars
 
 
-async def _process_one(symbol: str, exchange: str, timeframe: str, filters: dict):
+async def _process_one(symbol: str, exchange: str, timeframe: str, filters: dict, as_of: Optional[str] = None):
     """Fetch + analyze one stock. Returns (kind, payload). kind: 'result' or 'error'."""
     yahoo_symbol = to_yahoo_symbol(symbol, exchange)
     t0 = time.perf_counter()
     try:
-        bars = await _fetch_with_retry(yahoo_symbol, timeframe)
+        bars = slice_to_date(await _fetch_with_retry(yahoo_symbol, timeframe), as_of)
         if bars.empty:
             alt = alternate_exchange(exchange)
             alt_symbol = to_yahoo_symbol(symbol, alt)
             if alt_symbol != yahoo_symbol:
                 slog.info("fallback %s → %s (empty %s)", yahoo_symbol, alt_symbol, timeframe)
-                bars = await _fetch_with_retry(alt_symbol, timeframe)
+                bars = slice_to_date(await _fetch_with_retry(alt_symbol, timeframe), as_of)
                 if not bars.empty:
                     yahoo_symbol = alt_symbol
         dur_ms = (time.perf_counter() - t0) * 1000
@@ -195,9 +195,10 @@ async def scan_stream(req: ScanRequest):
     symbols = req.symbols
     filters = req.filters or DEFAULT_FILTERS
     timeframe = req.timeframe or "1d"
+    as_of = req.asOf
 
     slog.info("=" * 60)
-    slog.info("SCAN START · timeframe=%s · symbols=%d · batch=%d", timeframe, len(symbols), BATCH_SIZE)
+    slog.info("SCAN START · timeframe=%s · asOf=%s · symbols=%d · batch=%d", timeframe, as_of or "latest", len(symbols), BATCH_SIZE)
     scan_started = time.perf_counter()
     ok_count = 0
     err_count = 0
@@ -220,7 +221,7 @@ async def scan_stream(req: ScanRequest):
 
             # Launch all N in the batch concurrently.
             tasks = [
-                _process_one(row.symbol, row.exchange, timeframe, filters)
+                _process_one(row.symbol, row.exchange, timeframe, filters, as_of)
                 for row in batch
             ]
             results = await asyncio.gather(*tasks, return_exceptions=False)
@@ -245,24 +246,24 @@ async def scan_stream(req: ScanRequest):
         slog.info("SCAN DONE · total=%d · ok=%d · err=%d · elapsed=%.1fs",
                   total, ok_count, err_count, elapsed)
         slog.info("=" * 60)
-        yield _sse("done", {"total": total, "processed": processed, "ok": ok_count, "errors": err_count})
+        yield _sse("done", {"total": total, "processed": processed, "ok": ok_count, "errors": err_count, "asOf": as_of})
 
     return EventSourceResponse(event_generator())
 
 
 # ---------- RVOL screener (SSE) ----------
 
-async def _process_one_rvol(symbol: str, exchange: str, lookback: int):
+async def _process_one_rvol(symbol: str, exchange: str, lookback: int, as_of: Optional[str] = None):
     """Fetch daily bars + compute RVOL for one symbol."""
     yahoo_symbol = to_yahoo_symbol(symbol, exchange)
     t0 = time.perf_counter()
     try:
-        bars = await _fetch_with_retry(yahoo_symbol, "1d")
+        bars = slice_to_date(await _fetch_with_retry(yahoo_symbol, "1d"), as_of)
         if bars.empty:
             alt = alternate_exchange(exchange)
             alt_symbol = to_yahoo_symbol(symbol, alt)
             if alt_symbol != yahoo_symbol:
-                bars = await _fetch_with_retry(alt_symbol, "1d")
+                bars = slice_to_date(await _fetch_with_retry(alt_symbol, "1d"), as_of)
                 if not bars.empty:
                     yahoo_symbol = alt_symbol
         dur_ms = (time.perf_counter() - t0) * 1000
@@ -295,9 +296,10 @@ async def scan_rvol_stream(req: RvolScanRequest):
     """
     symbols = req.symbols
     lookback = max(1, min(100, int(req.lookback or 20)))
+    as_of = req.asOf
 
     slog.info("=" * 60)
-    slog.info("RVOL SCAN START · lookback=%d · symbols=%d · batch=%d", lookback, len(symbols), BATCH_SIZE)
+    slog.info("RVOL SCAN START · lookback=%d · asOf=%s · symbols=%d · batch=%d", lookback, as_of or "latest", len(symbols), BATCH_SIZE)
     scan_started = time.perf_counter()
     ok_count = 0
     err_count = 0
@@ -317,7 +319,7 @@ async def scan_rvol_stream(req: RvolScanRequest):
                     "symbol": to_yahoo_symbol(row.symbol, row.exchange),
                 })
 
-            tasks = [_process_one_rvol(row.symbol, row.exchange, lookback) for row in batch]
+            tasks = [_process_one_rvol(row.symbol, row.exchange, lookback, as_of) for row in batch]
             results = await asyncio.gather(*tasks, return_exceptions=False)
 
             batch_ok = batch_err = 0
@@ -338,24 +340,24 @@ async def scan_rvol_stream(req: RvolScanRequest):
         slog.info("RVOL SCAN DONE · total=%d · ok=%d · err=%d · elapsed=%.1fs",
                   total, ok_count, err_count, elapsed)
         slog.info("=" * 60)
-        yield _sse("done", {"total": total, "processed": processed, "ok": ok_count, "errors": err_count})
+        yield _sse("done", {"total": total, "processed": processed, "ok": ok_count, "errors": err_count, "asOf": as_of})
 
     return EventSourceResponse(event_generator())
 
 
 # ---------- Trend Template screener (SSE) ----------
 
-async def _process_one_trend(symbol: str, exchange: str, bench_ret_6m: Optional[float]):
+async def _process_one_trend(symbol: str, exchange: str, bench_ret_6m: Optional[float], as_of: Optional[str] = None):
     """Fetch daily bars + evaluate the Minervini Trend Template for one symbol."""
     yahoo_symbol = to_yahoo_symbol(symbol, exchange)
     t0 = time.perf_counter()
     try:
-        bars = await _fetch_with_retry(yahoo_symbol, "1d")
+        bars = slice_to_date(await _fetch_with_retry(yahoo_symbol, "1d"), as_of)
         if bars.empty:
             alt = alternate_exchange(exchange)
             alt_symbol = to_yahoo_symbol(symbol, alt)
             if alt_symbol != yahoo_symbol:
-                bars = await _fetch_with_retry(alt_symbol, "1d")
+                bars = slice_to_date(await _fetch_with_retry(alt_symbol, "1d"), as_of)
                 if not bars.empty:
                     yahoo_symbol = alt_symbol
         dur_ms = (time.perf_counter() - t0) * 1000
@@ -398,11 +400,12 @@ async def scan_trend_template_stream(req: TrendTemplateScanRequest):
     """
     symbols = req.symbols
     bench_yahoo = _resolve_benchmark_yahoo(req.benchmarkSymbol, req.benchmarkExchange)
+    as_of = req.asOf
 
     slog.info("=" * 60)
     slog.info(
-        "TT SCAN START · benchmark=%s · symbols=%d · batch=%d",
-        bench_yahoo, len(symbols), BATCH_SIZE,
+        "TT SCAN START · benchmark=%s · asOf=%s · symbols=%d · batch=%d",
+        bench_yahoo, as_of or "latest", len(symbols), BATCH_SIZE,
     )
     scan_started = time.perf_counter()
     ok_count = 0
@@ -411,7 +414,7 @@ async def scan_trend_template_stream(req: TrendTemplateScanRequest):
 
     # Fetch the benchmark once and compute its 6-month return. All symbols
     # in this scan share the same benchmark return (as per the Pine script).
-    bench_bars = await _fetch_with_retry(bench_yahoo, "1d")
+    bench_bars = slice_to_date(await _fetch_with_retry(bench_yahoo, "1d"), as_of)
     if bench_bars.empty:
         slog.warning("TT benchmark %s returned no data — c8 will always be False", bench_yahoo)
         bench_ret_6m: Optional[float] = None
@@ -447,7 +450,7 @@ async def scan_trend_template_stream(req: TrendTemplateScanRequest):
                 })
 
             tasks = [
-                _process_one_trend(row.symbol, row.exchange, bench_ret_6m)
+                _process_one_trend(row.symbol, row.exchange, bench_ret_6m, as_of)
                 for row in batch
             ]
             results = await asyncio.gather(*tasks, return_exceptions=False)
@@ -485,6 +488,7 @@ async def scan_trend_template_stream(req: TrendTemplateScanRequest):
             "ok": ok_count,
             "errors": err_count,
             "stage2": stage2_count,
+            "asOf": as_of,
         })
 
     return EventSourceResponse(event_generator())
@@ -497,17 +501,18 @@ async def _process_one_master(
     exchange: str,
     bench_ret_6m: Optional[float],
     master_cfg: dict,
+    as_of: Optional[str] = None,
 ):
     """Fetch daily bars once, then run Trend Template + VCP + RVOL together."""
     yahoo_symbol = to_yahoo_symbol(symbol, exchange)
     t0 = time.perf_counter()
     try:
-        bars = await _fetch_with_retry(yahoo_symbol, "1d")
+        bars = slice_to_date(await _fetch_with_retry(yahoo_symbol, "1d"), as_of)
         if bars.empty:
             alt = alternate_exchange(exchange)
             alt_symbol = to_yahoo_symbol(symbol, alt)
             if alt_symbol != yahoo_symbol:
-                bars = await _fetch_with_retry(alt_symbol, "1d")
+                bars = slice_to_date(await _fetch_with_retry(alt_symbol, "1d"), as_of)
                 if not bars.empty:
                     yahoo_symbol = alt_symbol
         dur_ms = (time.perf_counter() - t0) * 1000
@@ -545,6 +550,7 @@ async def scan_master_stream(req: MasterScanRequest):
     """
     symbols = req.symbols
     bench_yahoo = _resolve_benchmark_yahoo(req.benchmarkSymbol, req.benchmarkExchange)
+    as_of = req.asOf
 
     master_cfg: dict[str, Any] = {
         "readyRvol":          float(req.readyRvol),
@@ -556,13 +562,13 @@ async def scan_master_stream(req: MasterScanRequest):
 
     slog.info("=" * 60)
     slog.info(
-        "MASTER SCAN START · benchmark=%s · symbols=%d · batch=%d · readyRvol=%.2f",
-        bench_yahoo, len(symbols), BATCH_SIZE, master_cfg["readyRvol"],
+        "MASTER SCAN START · benchmark=%s · asOf=%s · symbols=%d · batch=%d · readyRvol=%.2f",
+        bench_yahoo, as_of or "latest", len(symbols), BATCH_SIZE, master_cfg["readyRvol"],
     )
     scan_started = time.perf_counter()
 
     # Fetch benchmark once and cache its 6M return.
-    bench_bars = await _fetch_with_retry(bench_yahoo, "1d")
+    bench_bars = slice_to_date(await _fetch_with_retry(bench_yahoo, "1d"), as_of)
     if bench_bars.empty:
         slog.warning("MASTER benchmark %s returned no data — Trend rule c8 will be False", bench_yahoo)
         bench_ret_6m: Optional[float] = None
@@ -589,6 +595,7 @@ async def scan_master_stream(req: MasterScanRequest):
             "benchmarkSymbol": bench_yahoo,
             "return6m": (bench_ret_6m if bench_ret_6m is not None else 0.0),
             "available": bench_ret_6m is not None,
+            "asOf": as_of,
         })
 
         for i in range(0, total, BATCH_SIZE):
@@ -602,7 +609,7 @@ async def scan_master_stream(req: MasterScanRequest):
                 })
 
             tasks = [
-                _process_one_master(row.symbol, row.exchange, bench_ret_6m, master_cfg)
+                _process_one_master(row.symbol, row.exchange, bench_ret_6m, master_cfg, as_of)
                 for row in batch
             ]
             results = await asyncio.gather(*tasks, return_exceptions=False)
@@ -640,6 +647,7 @@ async def scan_master_stream(req: MasterScanRequest):
             "ok": ok_count,
             "errors": err_count,
             "verdictCounts": verdict_counts,
+            "asOf": as_of,
         })
 
     return EventSourceResponse(event_generator())

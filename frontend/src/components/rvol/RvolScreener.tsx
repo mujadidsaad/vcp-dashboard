@@ -101,7 +101,7 @@ export default function RvolScreener({ universes }: Props) {
     abortRef.current = ac;
 
     try {
-      await startRvolScan(stocks, cfg.lookback, {
+      await startRvolScan(stocks, cfg.lookback, cfg.asOf, {
         onProgress: p => flushSync(() => {
           setProcessed(p.current);
           setTotal(p.total);

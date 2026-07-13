@@ -1,3 +1,4 @@
+import AsOfPicker from '../AsOfPicker';
 import type { RvolScanConfig, RvolSortMode } from '../../types';
 import type { UniverseInfo } from '../../api';
 
@@ -149,6 +150,11 @@ export default function RvolControls(p: Props) {
           value={p.selectedUniverse}
           onChange={p.onUniverseChange}
           options={p.universes.map(u => ({ value: u.name, label: `${u.name} · ${u.count.toLocaleString()}` }))}
+        />
+        <AsOfPicker
+          value={c.asOf}
+          onChange={asOf => p.onCfg({ ...c, asOf })}
+          compact
         />
         <NumberField
           label="Lookback"

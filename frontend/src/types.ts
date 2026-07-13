@@ -59,6 +59,8 @@ export interface FilterConfig {
   minBaseDuration: number;
   rvolFilter: RvolFilter;
   strongStartOnly: boolean;
+  /** Optional YYYY-MM-DD backtest cutoff. Undefined means latest data. */
+  asOf?: string;
   checks: Record<string, CheckConfig>;
 }
 
@@ -110,6 +112,8 @@ export interface RvolScanConfig {
   showRvolAs: 'Percent' | 'Ratio';
   sortBy: RvolSortMode;
   strongStartOnly: boolean;
+  /** Optional YYYY-MM-DD backtest cutoff. Undefined means latest data. */
+  asOf?: string;
 }
 
 // ============ Trend Template Screener ============
@@ -173,6 +177,8 @@ export interface TrendTemplateConfig {
   /** Which stages appear in the table. */
   stageFilter: Array<1 | 2 | 3 | 4>;
   sortBy: TrendSortMode;
+  /** Optional YYYY-MM-DD backtest cutoff. Undefined means latest data. */
+  asOf?: string;
 }
 
 // ============ Master Screener (fuses Trend + VCP + RVOL) ============
@@ -232,4 +238,6 @@ export interface MasterConfig {
   watchlistRvol: number;
   requireStrongStart: boolean;
   rvolLookback: number;
+  /** Optional YYYY-MM-DD backtest cutoff. Undefined means latest data. */
+  asOf?: string;
 }

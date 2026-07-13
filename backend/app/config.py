@@ -19,8 +19,8 @@ TIMEFRAME_TO_YF: dict[str, dict[str, str]] = {
     "30m": {"interval": "30m", "period": "1mo"},
     "1h":  {"interval": "60m", "period": "3mo"},
     "4h":  {"interval": "60m", "period": "6mo"},
-    "1d":  {"interval": "1d",  "period": "1y"},
-    "1wk": {"interval": "1wk", "period": "2y"},
+    "1d":  {"interval": "1d",  "period": "5y"},
+    "1wk": {"interval": "1wk", "period": "5y"},
     "1mo": {"interval": "1mo", "period": "5y"},
 }
 
