@@ -8,6 +8,11 @@ html, body, #root {
   height: 100%;
 }
 
+/* Prevent accidental horizontal overflow (mobile safety net) */
+html, body {
+  overflow-x: hidden;
+}
+
 body {
   background: #0a0d0a;
   color: #e6ecdb;

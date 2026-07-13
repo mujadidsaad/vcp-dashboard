@@ -211,7 +211,7 @@ export default function App() {
         onTabChange={setActiveTab}
       />
 
-      <div className="mx-auto max-w-[1400px] px-6 py-6 flex flex-col lg:flex-row gap-5">
+      <div className="mx-auto max-w-[1400px] px-3 sm:px-6 py-4 sm:py-6 flex flex-col lg:flex-row gap-4 sm:gap-5">
         {activeTab === 'home' && (
           <LandingPage
             onGetStarted={dismissHelp}

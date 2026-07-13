@@ -106,10 +106,10 @@ export default function ScanControls(p: Props) {
 
           {/* HUGE progress counter - always visible */}
           <div className="flex items-baseline gap-1">
-            <div className="stat-num text-4xl font-bold text-white leading-none">
+            <div className="stat-num text-2xl sm:text-4xl font-bold text-white leading-none">
               {p.progress}
             </div>
-            <div className="stat-num text-lg text-white/40 leading-none">
+            <div className="stat-num text-base sm:text-lg text-white/40 leading-none">
               / {p.total}
             </div>
             <div className="text-[10px] uppercase tracking-[0.16em] text-white/40 ml-2 leading-none">
@@ -118,7 +118,7 @@ export default function ScanControls(p: Props) {
           </div>
         </div>
 
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-4 sm:gap-5 flex-wrap">
           {p.lastScanAt && (
             <div className="flex flex-col items-start">
               <div className="text-[10px] uppercase tracking-[0.16em] text-white/40">Last scan</div>
