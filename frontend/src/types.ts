@@ -111,3 +111,66 @@ export interface RvolScanConfig {
   sortBy: RvolSortMode;
   strongStartOnly: boolean;
 }
+
+// ============ Trend Template Screener ============
+
+/**
+ * Result from POST /api/scan/trend-template for a single stock.
+ * Mirrors the payload emitted by the backend's `analyze_trend_template`.
+ */
+export interface TrendTemplateResult {
+  symbol: string;
+  yahooSymbol: string;
+  analysisDate: string;
+
+  /** 1 = base, 2 = advance, 3 = topping, 4 = decline, 0 = no data */
+  stage: 0 | 1 | 2 | 3 | 4;
+  /** 0..8 — number of Minervini rules that pass */
+  score: number;
+
+  close: number;
+  sma50: number;
+  sma150: number;
+  sma200: number;
+  sma200_21ago: number;
+  high52w: number;
+  low52w: number;
+  /** Stock's 6-month return (decimal, e.g. 0.184 = +18.4%) */
+  return6m: number;
+  /** Benchmark's 6-month return over the same window (decimal) */
+  benchmarkReturn6m: number;
+  /** return6m - benchmarkReturn6m — "relative strength" */
+  rsVsBench: number;
+
+  // The 8 Minervini rules — kept as individual booleans for chip rendering.
+  c1_aboveMa150_200: boolean;
+  c2_ma150AboveMa200: boolean;
+  c3_ma200Rising: boolean;
+  c4_ma50AboveMa150_200: boolean;
+  c5_aboveMa50: boolean;
+  c6_above30PctFromLow: boolean;
+  c7_within25PctOfHigh: boolean;
+  c8_beatsBenchmark: boolean;
+
+  reason?: string;
+}
+
+/** Benchmark info emitted at the start of a Trend Template scan. */
+export interface TrendTemplateBenchmark {
+  benchmarkSymbol: string;
+  return6m: number;
+  available: boolean;
+}
+
+export type TrendSortMode = 'Score' | 'Stage' | 'RS' | 'Symbol';
+
+/** Per-user UI preferences for the Trend Template screener. */
+export interface TrendTemplateConfig {
+  /** Yahoo ticker (or plain symbol) — default "^NSEI" (Nifty 50). */
+  benchmarkSymbol: string;
+  /** Stocks with score >= this show up (0..8) */
+  minScore: number;
+  /** Which stages appear in the table. */
+  stageFilter: Array<1 | 2 | 3 | 4>;
+  sortBy: TrendSortMode;
+}

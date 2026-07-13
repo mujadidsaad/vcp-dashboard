@@ -1,4 +1,12 @@
-import type { ConfigResponse, FilterConfig, RvolResult, StockRow, VCPResult } from './types';
+import type {
+  ConfigResponse,
+  FilterConfig,
+  RvolResult,
+  StockRow,
+  TrendTemplateBenchmark,
+  TrendTemplateResult,
+  VCPResult,
+} from './types';
 
 // In dev, Vite proxies /api/* to http://localhost:8000 (see vite.config.ts).
 // In production (Vercel), set VITE_API_BASE=https://your-backend.onrender.com
@@ -33,6 +41,12 @@ export interface ScanEvents<TResult = VCPResult> {
   onResult?: (r: TResult) => void;
   onError?: (e: { symbol: string; reason: string }) => void;
   onDone?: (d: { total: number; processed: number }) => void;
+  /**
+   * Optional catch-all for screener-specific event names (e.g. the Trend
+   * Template endpoint emits a `benchmark` event before results). Keys are
+   * event names; values receive the parsed payload.
+   */
+  extraEvents?: Record<string, (payload: any) => void>;
 }
 
 // ----- shared SSE stream parser -----
@@ -70,6 +84,9 @@ async function consumeSse<T>(
       case 'result':   events.onResult?.(payload as any); break;
       case 'error':    events.onError?.(payload as any); break;
       case 'done':     events.onDone?.(payload as any); break;
+      default:
+        events.extraEvents?.[event]?.(payload);
+        break;
     }
   };
 
@@ -131,6 +148,36 @@ export async function startRvolScan(
     `${BASE}/api/scan/rvol`,
     { symbols, lookback },
     events,
+    signal,
+  );
+}
+
+/** POST /api/scan/trend-template (Minervini Trend Template screener, SSE).
+ *
+ * In addition to the standard events, the backend emits ONE `benchmark`
+ * event at the very start of the stream with `{ benchmarkSymbol, return6m,
+ * available }` — pass an `onBenchmark` callback to receive it.
+ */
+export async function startTrendTemplateScan(
+  symbols: StockRow[],
+  benchmarkSymbol: string,
+  benchmarkExchange: string,
+  events: ScanEvents<TrendTemplateResult> & {
+    onBenchmark?: (b: TrendTemplateBenchmark) => void;
+  },
+  signal?: AbortSignal
+): Promise<void> {
+  const { onBenchmark, extraEvents, ...rest } = events;
+  return consumeSse<TrendTemplateResult>(
+    `${BASE}/api/scan/trend-template`,
+    { symbols, benchmarkSymbol, benchmarkExchange },
+    {
+      ...rest,
+      extraEvents: {
+        ...(extraEvents ?? {}),
+        benchmark: (p: TrendTemplateBenchmark) => onBenchmark?.(p),
+      },
+    },
     signal,
   );
 }

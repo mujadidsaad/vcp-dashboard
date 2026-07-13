@@ -5,6 +5,7 @@ import FilterPanel from './components/FilterPanel';
 import ScanControls from './components/ScanControls';
 import ResultsGrid, { passesRvol } from './components/ResultsGrid';
 import RvolScreener from './components/rvol/RvolScreener';
+import TrendTemplateScreener from './components/trend/TrendTemplateScreener';
 import { applyVcpFilterSort, downloadCsv, vcpToCsv } from './components/vcpCsv';
 import { fetchConfig, fetchStocks, fetchUniverses, startScan, type UniverseInfo } from './api';
 import { clearState, loadState, saveState } from './persist';
@@ -238,6 +239,10 @@ export default function App() {
 
         {activeTab === 'rvol' && (
           <RvolScreener universes={universes} />
+        )}
+
+        {activeTab === 'trend' && (
+          <TrendTemplateScreener universes={universes} />
         )}
       </div>
     </div>

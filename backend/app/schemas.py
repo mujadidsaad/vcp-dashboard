@@ -25,3 +25,16 @@ class SingleScanRequest(BaseModel):
 class RvolScanRequest(BaseModel):
     symbols: List[StockRow]
     lookback: int = 20
+
+
+class TrendTemplateScanRequest(BaseModel):
+    """Request body for POST /api/scan/trend-template.
+
+    The benchmark is fetched once server-side and its 6-month return is reused
+    for every symbol in this scan (matching the Pine reference).
+    """
+    symbols: List[StockRow]
+    # Benchmark ticker to compare relative strength against.
+    # Accepts either a Yahoo ticker (e.g. "^NSEI") or a plain symbol+exchange.
+    benchmarkSymbol: str = "^NSEI"
+    benchmarkExchange: str = "NSE"
