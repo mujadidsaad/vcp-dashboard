@@ -1,13 +1,15 @@
-import AsOfPicker from '../AsOfPicker';
-import type { TrendTemplateConfig, TrendTemplateResult, TrendSortMode } from '../../types';
-import type { UniverseInfo } from '../../api';
+/**
+ * TrendControls — slim scan bar (VCP-style).
+ *
+ * All filter/config controls (universe, benchmark, as-of, min score, sort,
+ * stage chips) live in the shared ScreenerSidebar. This component keeps
+ * only the run/stop/download buttons, progress bar, benchmark ribbon,
+ * and the cached-scan ribbon.
+ */
+
+import type { TrendTemplateResult } from '../../types';
 
 interface Props {
-  cfg: TrendTemplateConfig;
-  onCfg: (c: TrendTemplateConfig) => void;
-  universes: UniverseInfo[];
-  selectedUniverse: string;
-  onUniverseChange: (name: string) => void;
   scanning: boolean;
   onStart: () => void;
   onStop: () => void;
@@ -27,13 +29,6 @@ interface Props {
   stage2Count: number;
 }
 
-const BENCHMARK_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: '^NSEI',    label: 'Nifty 50 (^NSEI)' },
-  { value: '^NSEBANK', label: 'Bank Nifty (^NSEBANK)' },
-  { value: '^CNXIT',   label: 'Nifty IT (^CNXIT)' },
-  { value: '^BSESN',   label: 'BSE Sensex (^BSESN)' },
-];
-
 function formatAgo(ms: number): string {
   const diff = Date.now() - ms;
   if (!Number.isFinite(diff) || diff < 0) return '';
@@ -43,86 +38,13 @@ function formatAgo(ms: number): string {
   return `${Math.round(diff / (24 * 3_600_000))}d ago`;
 }
 
-function LabeledSelect<T extends string>({
-  label, value, onChange, options,
-}: { label: string; value: T; onChange: (v: T) => void; options: Array<{ value: T; label: string }> }) {
-  return (
-    <label className="flex flex-col gap-1">
-      <span className="text-[10px] uppercase tracking-[0.16em] text-white/40 font-medium">{label}</span>
-      <select
-        value={value}
-        onChange={e => onChange(e.target.value as T)}
-        className="h-9 px-2.5 rounded-md bg-white/[0.03] border border-white/10 text-[12px] text-white focus:outline-none focus:border-accent/50"
-      >
-        {options.map(o => (
-          <option key={o.value} value={o.value} className="bg-bg text-white">{o.label}</option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
-function NumberField({
-  label, value, onChange, min, max, step = 1, suffix,
-}: { label: string; value: number; onChange: (v: number) => void; min?: number; max?: number; step?: number; suffix?: string }) {
-  return (
-    <label className="flex flex-col gap-1">
-      <span className="text-[10px] uppercase tracking-[0.16em] text-white/40 font-medium">
-        {label}{suffix ? ` (${suffix})` : ''}
-      </span>
-      <input
-        type="number"
-        value={Number.isFinite(value) ? value : 0}
-        min={min}
-        max={max}
-        step={step}
-        onChange={e => onChange(parseFloat(e.target.value))}
-        className="h-9 px-2.5 rounded-md bg-white/[0.03] border border-white/10 text-[12px] text-white focus:outline-none focus:border-accent/50 stat-num"
-      />
-    </label>
-  );
-}
-
-function StageChip({
-  stage, on, onToggle,
-}: { stage: 1 | 2 | 3 | 4; on: boolean; onToggle: () => void }) {
-  const labels: Record<number, { label: string; color: string }> = {
-    1: { label: 'S1 ▬', color: 'text-white/70 border-white/20 bg-white/[0.04]' },
-    2: { label: 'S2 ▲', color: 'text-good border-good/40 bg-good/10' },
-    3: { label: 'S3 ◆', color: 'text-warn border-warn/40 bg-warn/10' },
-    4: { label: 'S4 ▼', color: 'text-bad border-bad/40 bg-bad/10' },
-  };
-  const { label, color } = labels[stage];
-  return (
-    <button
-      onClick={onToggle}
-      className={
-        `px-2 h-8 rounded-md text-[11px] font-semibold border transition ` +
-        (on ? color : 'text-white/30 border-white/10 bg-white/[0.02]')
-      }
-    >
-      {label}
-    </button>
-  );
-}
-
 export default function TrendControls(p: Props) {
-  const c = p.cfg;
   const pct = p.total ? Math.round((p.processed / p.total) * 100) : 0;
-
-  const toggleStage = (s: 1 | 2 | 3 | 4) => {
-    const set = new Set<1 | 2 | 3 | 4>(c.stageFilter);
-    if (set.has(s)) set.delete(s); else set.add(s);
-    if (set.size === 0) return;
-    p.onCfg({ ...c, stageFilter: Array.from(set).sort() as Array<1 | 2 | 3 | 4> });
-  };
-
   const bench = p.benchmarkReturn6m;
   const benchPct = bench !== null && Number.isFinite(bench) ? bench * 100 : null;
 
   return (
     <div className="panel p-5 space-y-5">
-      {/* Header row */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <div className="flex items-center gap-2">
@@ -161,59 +83,6 @@ export default function TrendControls(p: Props) {
               Run Trend Template
             </button>
           )}
-        </div>
-      </div>
-
-      {/* Config row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-3">
-        <LabeledSelect
-          label="Universe"
-          value={p.selectedUniverse}
-          onChange={p.onUniverseChange}
-          options={p.universes.map(u => ({ value: u.name, label: `${u.name} · ${u.count.toLocaleString()}` }))}
-        />
-        <LabeledSelect
-          label="Benchmark (RS)"
-          value={c.benchmarkSymbol}
-          onChange={v => p.onCfg({ ...c, benchmarkSymbol: v })}
-          options={BENCHMARK_OPTIONS}
-        />
-        <AsOfPicker
-          value={c.asOf}
-          onChange={asOf => p.onCfg({ ...c, asOf })}
-          compact
-        />
-        <NumberField
-          label="Min Score"
-          suffix="of 8"
-          value={c.minScore}
-          min={0}
-          max={8}
-          onChange={v => p.onCfg({ ...c, minScore: Math.max(0, Math.min(8, Math.round(v || 0))) })}
-        />
-        <LabeledSelect<TrendSortMode>
-          label="Sort by"
-          value={c.sortBy}
-          onChange={v => p.onCfg({ ...c, sortBy: v })}
-          options={[
-            { value: 'Score',  label: 'Score (highest)' },
-            { value: 'Stage',  label: 'Stage (2 first)' },
-            { value: 'RS',     label: 'RS vs benchmark' },
-            { value: 'Symbol', label: 'Symbol (A-Z)' },
-          ]}
-        />
-        <div className="flex flex-col gap-1">
-          <span className="text-[10px] uppercase tracking-[0.16em] text-white/40 font-medium">Stages</span>
-          <div className="flex items-center gap-1">
-            {([2, 1, 3, 4] as const).map(s => (
-              <StageChip
-                key={s}
-                stage={s}
-                on={c.stageFilter.includes(s)}
-                onToggle={() => toggleStage(s)}
-              />
-            ))}
-          </div>
         </div>
       </div>
 

@@ -39,6 +39,9 @@ interface Props {
 
   /** Optional footer content (e.g. benchmark ribbon summary) */
   footer?: React.ReactNode;
+
+  /** Screener-specific config controls rendered below the summary. */
+  children?: React.ReactNode;
 }
 
 function Section({
@@ -118,6 +121,9 @@ export default function ScreenerSidebar(p: Props) {
           </div>
         </Section>
       )}
+
+      {/* Screener-specific config controls */}
+      {p.children}
 
       <div className="hr-soft" />
 

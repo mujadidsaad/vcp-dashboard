@@ -5,6 +5,7 @@ import type {
   TrendTemplateBenchmark,
   TrendTemplateConfig,
   TrendTemplateResult,
+  TrendSortMode,
 } from '../../types';
 import { fetchStocks, startTrendTemplateScan, type UniverseInfo } from '../../api';
 import { clearState, loadState, saveState } from '../../persist';
@@ -33,9 +34,90 @@ const DEFAULT_CFG: TrendTemplateConfig = {
   sortBy: 'Score',
 };
 
+const BENCHMARK_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: '^NSEI',    label: 'Nifty 50 (^NSEI)' },
+  { value: '^NSEBANK', label: 'Bank Nifty (^NSEBANK)' },
+  { value: '^CNXIT',   label: 'Nifty IT (^CNXIT)' },
+  { value: '^BSESN',   label: 'BSE Sensex (^BSESN)' },
+];
+
 interface Props {
   universes: UniverseInfo[];
 }
+
+/* ---------- sidebar sub-widgets ---------- */
+
+function SidebarSection({
+  title, children, right,
+}: { title: string; children: React.ReactNode; right?: React.ReactNode }) {
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-[10px] uppercase tracking-[0.16em] text-white/40 font-medium">{title}</h3>
+        {right}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function SidebarSelect<T extends string>({
+  value, onChange, options,
+}: { value: T; onChange: (v: T) => void; options: Array<{ value: T; label: string }> }) {
+  return (
+    <select
+      value={value}
+      onChange={e => onChange(e.target.value as T)}
+      className="w-full h-9 px-2.5 rounded-md bg-white/[0.03] border border-white/10 text-[12px] text-white focus:outline-none focus:border-accent/50"
+    >
+      {options.map(o => (
+        <option key={o.value} value={o.value} className="bg-bg text-white">{o.label}</option>
+      ))}
+    </select>
+  );
+}
+
+function SidebarNumber({
+  value, onChange, min, max, step = 1, suffix,
+}: { value: number; onChange: (v: number) => void; min?: number; max?: number; step?: number; suffix?: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        type="number"
+        value={Number.isFinite(value) ? value : 0}
+        min={min} max={max} step={step}
+        onChange={e => onChange(parseFloat(e.target.value))}
+        className="flex-1 h-9 px-2.5 rounded-md bg-white/[0.03] border border-white/10 text-[12px] text-white focus:outline-none focus:border-accent/50 stat-num"
+      />
+      {suffix && <span className="text-[11px] text-white/40">{suffix}</span>}
+    </div>
+  );
+}
+
+function StageChip({
+  stage, on, onToggle,
+}: { stage: 1 | 2 | 3 | 4; on: boolean; onToggle: () => void }) {
+  const labels: Record<number, { label: string; color: string }> = {
+    1: { label: 'S1', color: 'text-white/70 border-white/20 bg-white/[0.04]' },
+    2: { label: 'S2', color: 'text-good border-good/40 bg-good/10' },
+    3: { label: 'S3', color: 'text-warn border-warn/40 bg-warn/10' },
+    4: { label: 'S4', color: 'text-bad border-bad/40 bg-bad/10' },
+  };
+  const { label, color } = labels[stage];
+  return (
+    <button
+      onClick={onToggle}
+      className={
+        `px-2 h-7 rounded-md text-[11px] font-semibold border transition ` +
+        (on ? color : 'text-white/30 border-white/10 bg-white/[0.02]')
+      }
+    >
+      {label}
+    </button>
+  );
+}
+
+/* ---------- component ---------- */
 
 export default function TrendTemplateScreener({ universes }: Props) {
   const [cfg, setCfg] = useState<TrendTemplateConfig>(DEFAULT_CFG);
@@ -52,7 +134,6 @@ export default function TrendTemplateScreener({ universes }: Props) {
   const [hydrated, setHydrated] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Rehydrate the last Trend Template scan on first mount
   useEffect(() => {
     const cached = loadState<PersistedTrendScan>(TREND_PERSIST_KEY, TREND_PERSIST_VER);
     if (cached && cached.data.results.length > 0) {
@@ -68,7 +149,6 @@ export default function TrendTemplateScreener({ universes }: Props) {
     setHydrated(true);
   }, []);
 
-  // Fallback: pick first available universe if the persisted / default one isn't in the list.
   useEffect(() => {
     if (!hydrated) return;
     if (!universes.length) return;
@@ -77,7 +157,6 @@ export default function TrendTemplateScreener({ universes }: Props) {
     }
   }, [hydrated, universes]);  // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Load stocks whenever the selected universe changes
   useEffect(() => {
     if (!selectedUniverse) return;
     (async () => {
@@ -148,19 +227,12 @@ export default function TrendTemplateScreener({ universes }: Props) {
     clearState(TREND_PERSIST_KEY);
   };
 
-  // Persist a completed / stopped scan so it survives a refresh.
   useEffect(() => {
     if (!hydrated) return;
     if (scanning) return;
     if (results.length === 0) return;
     const payload: PersistedTrendScan = {
-      results,
-      errors,
-      processed,
-      total,
-      cfg,
-      selectedUniverse,
-      benchmark,
+      results, errors, processed, total, cfg, selectedUniverse, benchmark,
     };
     saveState(TREND_PERSIST_KEY, TREND_PERSIST_VER, payload);
     setLastScanAt(Date.now());
@@ -172,6 +244,13 @@ export default function TrendTemplateScreener({ universes }: Props) {
     const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
     const safeUniverse = selectedUniverse.replace(/[^a-z0-9]+/gi, '_');
     downloadCsv(`trend_${safeUniverse}_${stamp}.csv`, trendToCsv(rows));
+  };
+
+  const toggleStage = (s: 1 | 2 | 3 | 4) => {
+    const set = new Set<1 | 2 | 3 | 4>(cfg.stageFilter);
+    if (set.has(s)) set.delete(s); else set.add(s);
+    if (set.size === 0) return;
+    setCfg({ ...cfg, stageFilter: Array.from(set).sort() as Array<1 | 2 | 3 | 4> });
   };
 
   const stage1 = useMemo(() => results.filter(r => r.stage === 1).length, [results]);
@@ -191,40 +270,79 @@ export default function TrendTemplateScreener({ universes }: Props) {
         onAsOfChange={asOf => setCfg({ ...cfg, asOf })}
         totalStocks={stocks.length}
         stats={[
-          { label: 'Stage 1', value: stage1, tone: 'muted'  },
-          { label: 'Stage 2', value: stage2, tone: 'good'   },
-          { label: 'Stage 3', value: stage3, tone: 'warn'   },
-          { label: 'Stage 4', value: stage4, tone: 'bad'    },
+          { label: 'Stage 1', value: stage1, tone: 'muted' },
+          { label: 'Stage 2', value: stage2, tone: 'good'  },
+          { label: 'Stage 3', value: stage3, tone: 'warn'  },
+          { label: 'Stage 4', value: stage4, tone: 'bad'   },
         ]}
         onClear={results.length > 0 ? clearResults : undefined}
         scanning={scanning}
-      />
+      >
+        <SidebarSection title="Benchmark (RS)">
+          <SidebarSelect
+            value={cfg.benchmarkSymbol}
+            onChange={v => setCfg({ ...cfg, benchmarkSymbol: v })}
+            options={BENCHMARK_OPTIONS}
+          />
+        </SidebarSection>
+
+        <SidebarSection title="Min score">
+          <SidebarNumber
+            value={cfg.minScore}
+            min={0} max={8}
+            onChange={v => setCfg({ ...cfg, minScore: Math.max(0, Math.min(8, Math.round(v || 0))) })}
+            suffix="of 8"
+          />
+        </SidebarSection>
+
+        <SidebarSection title="Sort by">
+          <SidebarSelect<TrendSortMode>
+            value={cfg.sortBy}
+            onChange={v => setCfg({ ...cfg, sortBy: v })}
+            options={[
+              { value: 'Score',  label: 'Score (highest)' },
+              { value: 'Stage',  label: 'Stage (2 first)' },
+              { value: 'RS',     label: 'RS vs benchmark' },
+              { value: 'Symbol', label: 'Symbol (A-Z)' },
+            ]}
+          />
+        </SidebarSection>
+
+        <SidebarSection title="Stages">
+          <div className="flex items-center gap-1.5">
+            {([2, 1, 3, 4] as const).map(s => (
+              <StageChip
+                key={s}
+                stage={s}
+                on={cfg.stageFilter.includes(s)}
+                onToggle={() => toggleStage(s)}
+              />
+            ))}
+          </div>
+        </SidebarSection>
+      </ScreenerSidebar>
+
       <main className="flex-1 space-y-4">
-      <TrendControls
-        cfg={cfg}
-        onCfg={setCfg}
-        universes={universes}
-        selectedUniverse={selectedUniverse}
-        onUniverseChange={setSelectedUniverse}
-        scanning={scanning}
-        onStart={start}
-        onStop={stop}
-        onDownload={download}
-        onRescan={start}
-        onClear={clearResults}
-        lastScanAt={lastScanAt}
-        processed={processed}
-        total={total}
-        currentSymbol={currentSymbol}
-        totalStocks={stocks.length}
-        results={results}
-        errors={errors}
-        benchmarkReturn6m={benchmark?.return6m ?? null}
-        benchmarkSymbol={benchmark?.benchmarkSymbol ?? null}
-        benchmarkAvailable={benchmark?.available ?? false}
-        stage2Count={stage2Count}
-      />
-      <TrendResultsTable results={results} cfg={cfg} />
+        <TrendControls
+          scanning={scanning}
+          onStart={start}
+          onStop={stop}
+          onDownload={download}
+          onRescan={start}
+          onClear={clearResults}
+          lastScanAt={lastScanAt}
+          processed={processed}
+          total={total}
+          currentSymbol={currentSymbol}
+          totalStocks={stocks.length}
+          results={results}
+          errors={errors}
+          benchmarkReturn6m={benchmark?.return6m ?? null}
+          benchmarkSymbol={benchmark?.benchmarkSymbol ?? null}
+          benchmarkAvailable={benchmark?.available ?? false}
+          stage2Count={stage2Count}
+        />
+        <TrendResultsTable results={results} cfg={cfg} />
       </main>
     </>
   );

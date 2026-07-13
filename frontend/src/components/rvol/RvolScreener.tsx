@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
-import type { RvolResult, RvolScanConfig, StockRow } from '../../types';
+import type { RvolResult, RvolScanConfig, RvolSortMode, StockRow } from '../../types';
 import { fetchStocks, startRvolScan, type UniverseInfo } from '../../api';
 import { clearState, loadState, saveState } from '../../persist';
 import RvolControls from './RvolControls';
@@ -22,7 +22,7 @@ interface PersistedRvolScan {
 
 const DEFAULT_CFG: RvolScanConfig = {
   lookback: 20,
-  rvolFlagPct: 150, // more useful than the Pine default of 8; user can lower
+  rvolFlagPct: 150,
   chgFlagPct: 1.5,
   gatePct: 50,
   showRvolAs: 'Percent',
@@ -33,6 +33,57 @@ const DEFAULT_CFG: RvolScanConfig = {
 interface Props {
   universes: UniverseInfo[];
 }
+
+/* ---------- sidebar sub-widgets ---------- */
+
+function SidebarSection({
+  title, children, right,
+}: { title: string; children: React.ReactNode; right?: React.ReactNode }) {
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-[10px] uppercase tracking-[0.16em] text-white/40 font-medium">{title}</h3>
+        {right}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function SidebarSelect<T extends string>({
+  value, onChange, options,
+}: { value: T; onChange: (v: T) => void; options: Array<{ value: T; label: string }> }) {
+  return (
+    <select
+      value={value}
+      onChange={e => onChange(e.target.value as T)}
+      className="w-full h-9 px-2.5 rounded-md bg-white/[0.03] border border-white/10 text-[12px] text-white focus:outline-none focus:border-accent/50"
+    >
+      {options.map(o => (
+        <option key={o.value} value={o.value} className="bg-bg text-white">{o.label}</option>
+      ))}
+    </select>
+  );
+}
+
+function SidebarNumber({
+  value, onChange, min, max, step = 1, suffix,
+}: { value: number; onChange: (v: number) => void; min?: number; max?: number; step?: number; suffix?: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        type="number"
+        value={Number.isFinite(value) ? value : 0}
+        min={min} max={max} step={step}
+        onChange={e => onChange(parseFloat(e.target.value))}
+        className="flex-1 h-9 px-2.5 rounded-md bg-white/[0.03] border border-white/10 text-[12px] text-white focus:outline-none focus:border-accent/50 stat-num"
+      />
+      {suffix && <span className="text-[11px] text-white/40">{suffix}</span>}
+    </div>
+  );
+}
+
+/* ---------- component ---------- */
 
 export default function RvolScreener({ universes }: Props) {
   const [cfg, setCfg] = useState<RvolScanConfig>(DEFAULT_CFG);
@@ -48,7 +99,6 @@ export default function RvolScreener({ universes }: Props) {
   const [hydrated, setHydrated] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Rehydrate the last RVOL scan on first mount
   useEffect(() => {
     const cached = loadState<PersistedRvolScan>(RVOL_PERSIST_KEY, RVOL_PERSIST_VER);
     if (cached && cached.data.results.length > 0) {
@@ -63,8 +113,6 @@ export default function RvolScreener({ universes }: Props) {
     setHydrated(true);
   }, []);
 
-  // Fallback: pick first available universe if the persisted / default one isn't in the list.
-  // Only kick in AFTER rehydration so we don't fight the cached universe.
   useEffect(() => {
     if (!hydrated) return;
     if (!universes.length) return;
@@ -73,7 +121,6 @@ export default function RvolScreener({ universes }: Props) {
     }
   }, [hydrated, universes]);   // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Load the selected universe's stock list
   useEffect(() => {
     if (!selectedUniverse) return;
     (async () => {
@@ -89,7 +136,6 @@ export default function RvolScreener({ universes }: Props) {
 
   const start = async () => {
     if (!stocks.length) return;
-    // Any prior cached scan is now stale — wipe it before we start.
     clearState(RVOL_PERSIST_KEY);
     setLastScanAt(null);
     setResults([]);
@@ -133,18 +179,12 @@ export default function RvolScreener({ universes }: Props) {
     clearState(RVOL_PERSIST_KEY);
   };
 
-  // Persist a completed / stopped scan so it survives a refresh.
   useEffect(() => {
     if (!hydrated) return;
     if (scanning) return;
     if (results.length === 0) return;
     const payload: PersistedRvolScan = {
-      results,
-      errors,
-      processed,
-      total,
-      cfg,
-      selectedUniverse,
+      results, errors, processed, total, cfg, selectedUniverse,
     };
     saveState(RVOL_PERSIST_KEY, RVOL_PERSIST_VER, payload);
     setLastScanAt(Date.now());
@@ -175,36 +215,103 @@ export default function RvolScreener({ universes }: Props) {
         onAsOfChange={asOf => setCfg({ ...cfg, asOf })}
         totalStocks={totalStocks}
         stats={[
-          { label: 'Results',       value: resultsCount, tone: 'accent' },
-          { label: 'Strong Start',  value: strongCount,  tone: 'good'   },
-          { label: 'Errors',        value: errors,       tone: errors > 0 ? 'bad' : 'muted' },
-          { label: 'Lookback',      value: `${cfg.lookback}d`, tone: 'muted' },
+          { label: 'Results',      value: resultsCount, tone: 'accent' },
+          { label: 'Strong Start', value: strongCount,  tone: 'good'   },
+          { label: 'Errors',       value: errors,       tone: errors > 0 ? 'bad' : 'muted' },
+          { label: 'Lookback',     value: `${cfg.lookback}d`, tone: 'muted' },
         ]}
         onClear={results.length > 0 ? clearResults : undefined}
         scanning={scanning}
-      />
+      >
+        <SidebarSection title="Lookback">
+          <SidebarNumber
+            value={cfg.lookback}
+            min={1} max={100}
+            onChange={v => setCfg({ ...cfg, lookback: Math.max(1, Math.min(100, Math.round(v || 0))) })}
+            suffix="days"
+          />
+        </SidebarSection>
+
+        <SidebarSection title="RVOL flag">
+          <SidebarNumber
+            value={cfg.rvolFlagPct}
+            min={0} step={0.5}
+            onChange={v => setCfg({ ...cfg, rvolFlagPct: Math.max(0, v || 0) })}
+            suffix="%"
+          />
+        </SidebarSection>
+
+        <SidebarSection title="Chg threshold">
+          <SidebarNumber
+            value={cfg.chgFlagPct}
+            min={0} step={0.1}
+            onChange={v => setCfg({ ...cfg, chgFlagPct: Math.max(0, v || 0) })}
+            suffix="%"
+          />
+        </SidebarSection>
+
+        <SidebarSection title="Top % highlighted">
+          <SidebarNumber
+            value={cfg.gatePct}
+            min={10} max={100} step={5}
+            onChange={v => setCfg({ ...cfg, gatePct: Math.max(10, Math.min(100, Math.round(v || 0))) })}
+            suffix="%"
+          />
+        </SidebarSection>
+
+        <SidebarSection title="Sort by">
+          <SidebarSelect<RvolSortMode>
+            value={cfg.sortBy}
+            onChange={v => setCfg({ ...cfg, sortBy: v })}
+            options={[
+              { value: 'RVOL',   label: 'RVOL (highest)' },
+              { value: 'ChgPct', label: 'Chg% (biggest)' },
+              { value: 'SS',     label: 'Strong Start first' },
+            ]}
+          />
+        </SidebarSection>
+
+        <SidebarSection title="Show RVOL as">
+          <SidebarSelect
+            value={cfg.showRvolAs}
+            onChange={v => setCfg({ ...cfg, showRvolAs: v })}
+            options={[
+              { value: 'Percent', label: 'Percent (100% = avg)' },
+              { value: 'Ratio',   label: 'Ratio (1.00 = avg)' },
+            ]}
+          />
+        </SidebarSection>
+
+        <SidebarSection title="Strong Start">
+          <label className="flex items-center gap-2 text-[12px] text-white/75 cursor-pointer hover:text-white">
+            <input
+              type="checkbox"
+              checked={cfg.strongStartOnly}
+              onChange={e => setCfg({ ...cfg, strongStartOnly: e.target.checked })}
+              className="accent-accent w-3.5 h-3.5"
+            />
+            <span className="flex-1">Only Strong Start rows</span>
+          </label>
+        </SidebarSection>
+      </ScreenerSidebar>
+
       <main className="flex-1 space-y-4">
-      <RvolControls
-        cfg={cfg}
-        onCfg={setCfg}
-        universes={universes}
-        selectedUniverse={selectedUniverse}
-        onUniverseChange={setSelectedUniverse}
-        scanning={scanning}
-        onStart={start}
-        onStop={stop}
-        onDownload={download}
-        onRescan={start}
-        onClear={clearResults}
-        lastScanAt={lastScanAt}
-        processed={processed}
-        total={total}
-        currentSymbol={currentSymbol}
-        totalStocks={totalStocks}
-        results={resultsCount}
-        errors={errors}
-      />
-      <RvolResultsTable results={results} cfg={cfg} />
+        <RvolControls
+          scanning={scanning}
+          onStart={start}
+          onStop={stop}
+          onDownload={download}
+          onRescan={start}
+          onClear={clearResults}
+          lastScanAt={lastScanAt}
+          processed={processed}
+          total={total}
+          currentSymbol={currentSymbol}
+          totalStocks={totalStocks}
+          results={resultsCount}
+          errors={errors}
+        />
+        <RvolResultsTable results={results} cfg={cfg} />
       </main>
     </>
   );
