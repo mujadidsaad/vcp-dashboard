@@ -142,6 +142,12 @@ export default function MasterControls(p: Props) {
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
             <div className="text-xs text-white/70 font-medium">🎯  Master Screener — Trend + VCP + RVOL fused</div>
+            <span
+              className="ml-2 px-2 py-0.5 rounded-md text-[10px] font-semibold border border-info/40 bg-info/10 text-info uppercase tracking-[0.14em] cursor-help"
+              title="Master always runs on daily bars. Trend Template (SMA50/150/200, 52-week range) and RVOL (20-day volume average) are only meaningful on daily data. Use the VCP tab if you need intraday timeframes."
+            >
+              1D · Daily
+            </span>
           </div>
           <div className="text-[11px] text-white/40 mt-1">
             One click. All three signals. Verdict tells you whether to trade, watch, or skip.
