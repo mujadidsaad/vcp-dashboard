@@ -5,6 +5,7 @@ import { fetchStocks, startRvolScan, type UniverseInfo } from '../../api';
 import { clearState, loadState, saveState } from '../../persist';
 import RvolControls from './RvolControls';
 import RvolResultsTable from './RvolResultsTable';
+import ScreenerSidebar from '../ScreenerSidebar';
 import { applyRvolFilterSort, downloadCsv, rvolToCsv } from './csv';
 
 const RVOL_PERSIST_KEY = 'rvol-scan';
@@ -157,8 +158,32 @@ export default function RvolScreener({ universes }: Props) {
     downloadCsv(`rvol_${safeUniverse}_${stamp}.csv`, rvolToCsv(rows, cfg));
   };
 
+  const strongCount = useMemo(
+    () => results.filter(r => r.strongStart).length,
+    [results],
+  );
+
   return (
-    <main className="flex-1 space-y-4">
+    <>
+      <ScreenerSidebar
+        title="RVOL · Relative Volume"
+        subtitle="Confirmation filter on breakout day"
+        universes={universes}
+        selectedUniverse={selectedUniverse}
+        onUniverseChange={setSelectedUniverse}
+        asOf={cfg.asOf}
+        onAsOfChange={asOf => setCfg({ ...cfg, asOf })}
+        totalStocks={totalStocks}
+        stats={[
+          { label: 'Results',       value: resultsCount, tone: 'accent' },
+          { label: 'Strong Start',  value: strongCount,  tone: 'good'   },
+          { label: 'Errors',        value: errors,       tone: errors > 0 ? 'bad' : 'muted' },
+          { label: 'Lookback',      value: `${cfg.lookback}d`, tone: 'muted' },
+        ]}
+        onClear={results.length > 0 ? clearResults : undefined}
+        scanning={scanning}
+      />
+      <main className="flex-1 space-y-4">
       <RvolControls
         cfg={cfg}
         onCfg={setCfg}
@@ -180,6 +205,7 @@ export default function RvolScreener({ universes }: Props) {
         errors={errors}
       />
       <RvolResultsTable results={results} cfg={cfg} />
-    </main>
+      </main>
+    </>
   );
 }

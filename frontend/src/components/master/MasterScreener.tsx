@@ -11,6 +11,7 @@ import { fetchStocks, startMasterScan, type UniverseInfo } from '../../api';
 import { clearState, loadState, saveState } from '../../persist';
 import MasterControls from './MasterControls';
 import MasterResultsTable from './MasterResultsTable';
+import ScreenerSidebar from '../ScreenerSidebar';
 import { applyMasterFilterSort, downloadCsv, masterToCsv } from './csv';
 
 const PERSIST_KEY = 'master-scan';
@@ -180,8 +181,32 @@ export default function MasterScreener({ universes }: Props) {
     downloadCsv(`master_${safeUniverse}_${stamp}.csv`, masterToCsv(rows));
   };
 
+  const readyCount = verdictCounts['READY TO TRADE'] ?? 0;
+  const watchCount = verdictCounts['WATCHLIST'] ?? 0;
+  const setupCount = verdictCounts['SETUP FORMING'] ?? 0;
+  const holdCount  = verdictCounts['HOLD OFF'] ?? 0;
+
   return (
-    <main className="flex-1 space-y-4">
+    <>
+      <ScreenerSidebar
+        title="Master · Trend + VCP + RVOL"
+        subtitle="One verdict per stock"
+        universes={universes}
+        selectedUniverse={selectedUniverse}
+        onUniverseChange={setSelectedUniverse}
+        asOf={cfg.asOf}
+        onAsOfChange={asOf => setCfg({ ...cfg, asOf })}
+        totalStocks={stocks.length}
+        stats={[
+          { label: 'Ready',     value: readyCount, tone: 'good'   },
+          { label: 'Watch',     value: watchCount, tone: 'info'   },
+          { label: 'Setup',     value: setupCount, tone: 'accent' },
+          { label: 'Hold off',  value: holdCount,  tone: 'warn'   },
+        ]}
+        onClear={results.length > 0 ? clearResults : undefined}
+        scanning={scanning}
+      />
+      <main className="flex-1 space-y-4">
       <MasterControls
         cfg={cfg}
         onCfg={setCfg}
@@ -207,6 +232,7 @@ export default function MasterScreener({ universes }: Props) {
         verdictCounts={verdictCounts}
       />
       <MasterResultsTable results={results} cfg={cfg} />
-    </main>
+      </main>
+    </>
   );
 }

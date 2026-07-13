@@ -10,6 +10,7 @@ import { fetchStocks, startTrendTemplateScan, type UniverseInfo } from '../../ap
 import { clearState, loadState, saveState } from '../../persist';
 import TrendControls from './TrendControls';
 import TrendResultsTable from './TrendResultsTable';
+import ScreenerSidebar from '../ScreenerSidebar';
 import { applyTrendFilterSort, downloadCsv, trendToCsv } from './csv';
 
 const TREND_PERSIST_KEY = 'trend-template-scan';
@@ -173,8 +174,32 @@ export default function TrendTemplateScreener({ universes }: Props) {
     downloadCsv(`trend_${safeUniverse}_${stamp}.csv`, trendToCsv(rows));
   };
 
+  const stage1 = useMemo(() => results.filter(r => r.stage === 1).length, [results]);
+  const stage2 = stage2Count;
+  const stage3 = useMemo(() => results.filter(r => r.stage === 3).length, [results]);
+  const stage4 = useMemo(() => results.filter(r => r.stage === 4).length, [results]);
+
   return (
-    <main className="flex-1 space-y-4">
+    <>
+      <ScreenerSidebar
+        title="Trend Template · Stages"
+        subtitle="Minervini 8 rules + Weinstein stages"
+        universes={universes}
+        selectedUniverse={selectedUniverse}
+        onUniverseChange={setSelectedUniverse}
+        asOf={cfg.asOf}
+        onAsOfChange={asOf => setCfg({ ...cfg, asOf })}
+        totalStocks={stocks.length}
+        stats={[
+          { label: 'Stage 1', value: stage1, tone: 'muted'  },
+          { label: 'Stage 2', value: stage2, tone: 'good'   },
+          { label: 'Stage 3', value: stage3, tone: 'warn'   },
+          { label: 'Stage 4', value: stage4, tone: 'bad'    },
+        ]}
+        onClear={results.length > 0 ? clearResults : undefined}
+        scanning={scanning}
+      />
+      <main className="flex-1 space-y-4">
       <TrendControls
         cfg={cfg}
         onCfg={setCfg}
@@ -200,6 +225,7 @@ export default function TrendTemplateScreener({ universes }: Props) {
         stage2Count={stage2Count}
       />
       <TrendResultsTable results={results} cfg={cfg} />
-    </main>
+      </main>
+    </>
   );
 }
