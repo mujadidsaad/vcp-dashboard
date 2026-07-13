@@ -9,31 +9,31 @@ interface Props {
 const VERDICT_META: Record<MasterVerdict, { label: string; badge: string; row: string; icon: string }> = {
   'READY TO TRADE': {
     label: 'READY',
-    icon:  '✅',
+    icon:  '',
     badge: 'bg-good/25 text-good border border-good/60',
     row:   'bg-good/[0.06] hover:bg-good/[0.10]',
   },
   'WATCHLIST': {
     label: 'WATCH',
-    icon:  '👀',
+    icon:  '',
     badge: 'bg-info/25 text-info border border-info/60',
     row:   'bg-info/[0.05] hover:bg-info/[0.09]',
   },
   'SETUP FORMING': {
     label: 'SETUP',
-    icon:  '⚙️',
+    icon:  '',
     badge: 'bg-accent/20 text-accent border border-accent/50',
     row:   '',
   },
   'HOLD OFF': {
     label: 'HOLD',
-    icon:  '⏸️',
+    icon:  '',
     badge: 'bg-warn/20 text-warn border border-warn/50',
     row:   'bg-warn/[0.03]',
   },
   'SKIP': {
     label: 'SKIP',
-    icon:  '❌',
+    icon:  '',
     badge: 'bg-white/5 text-white/40 border border-white/10',
     row:   'opacity-70',
   },
@@ -95,7 +95,7 @@ export default function MasterResultsTable({ results, cfg }: Props) {
     return (
       <div className="panel px-8 py-14 text-center">
         <div className="mx-auto w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-center mb-3">
-          <span className="text-2xl">🎯</span>
+          <span className="text-2xl">MS</span>
         </div>
         <div className="text-white/70 text-sm font-medium">
           No results yet — click <span className="text-accent">Run Master Screener</span> above
@@ -218,7 +218,7 @@ export default function MasterResultsTable({ results, cfg }: Props) {
                   </td>
                   <td className="px-3 py-2 text-center">
                     {r.strongStart
-                      ? <span className="text-good text-[14px] leading-none">★</span>
+                      ? <span className="text-good text-[14px] leading-none">*</span>
                       : <span className="text-white/20">·</span>}
                   </td>
                   <td className="px-3 py-2 text-right text-white/85 stat-num">{fmtPrice(r.close)}</td>

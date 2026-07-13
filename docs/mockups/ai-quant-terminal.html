@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Quant Terminal Mockup</title>
+  <style>
+    :root {
+      --bg: #070b14;
+      --panel: rgba(14, 22, 38, 0.78);
+      --panel-strong: #0e1626;
+      --line: rgba(125, 211, 252, 0.18);
+      --line-strong: rgba(125, 211, 252, 0.36);
+      --cyan: #38bdf8;
+      --violet: #a78bfa;
+      --green: #22c55e;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --text: #e5f2ff;
+      --muted: #7c8aa5;
+      --muted2: #4c5b73;
+      --shadow: 0 0 36px rgba(56, 189, 248, 0.12);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(900px 420px at 12% -10%, rgba(56,189,248,0.18), transparent 58%),
+        radial-gradient(900px 520px at 90% 0%, rgba(167,139,250,0.14), transparent 60%),
+        linear-gradient(180deg, #050812 0%, #070b14 45%, #050812 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.12;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: radial-gradient(circle at center, black 0%, transparent 80%);
+    }
+
+    .app {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 22px;
+    }
+
+    .topbar {
+      height: 72px;
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      border: 1px solid var(--line);
+      background: rgba(5, 10, 20, 0.62);
+      backdrop-filter: blur(16px);
+      border-radius: 22px;
+      padding: 0 20px;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 14px;
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 220px;
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background:
+        radial-gradient(circle at 30% 20%, #fff 0%, transparent 12%),
+        linear-gradient(135deg, var(--cyan), var(--violet));
+      box-shadow: 0 0 28px rgba(56,189,248,0.34);
+      display: grid;
+      place-items: center;
+      color: #061018;
+      font-weight: 900;
+    }
+
+    .brand-title {
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+
+    .brand-title span {
+      color: var(--cyan);
+    }
+
+    .brand-sub {
+      margin-top: 4px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 10px;
+    }
+
+    .nav {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex: 1;
+    }
+
+    .nav button {
+      border: 1px solid transparent;
+      color: var(--muted);
+      background: transparent;
+      border-radius: 999px;
+      padding: 9px 13px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .nav button.active {
+      color: var(--text);
+      border-color: var(--line-strong);
+      background: rgba(56,189,248,0.08);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03), 0 0 18px rgba(56,189,248,0.08);
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .pulse {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 18px rgba(34,197,94,0.9);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 330px 1fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0)),
+        var(--panel);
+      backdrop-filter: blur(18px);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .side {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-self: start;
+    }
+
+    .eyebrow {
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      color: var(--muted);
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .select, .input {
+      width: 100%;
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid rgba(125,211,252,0.14);
+      background: rgba(4, 10, 20, 0.55);
+      color: var(--text);
+      padding: 0 12px;
+      outline: none;
+      font-size: 13px;
+      font-family: inherit;
+    }
+
+    .select:focus, .input:focus {
+      border-color: rgba(56,189,248,0.62);
+      box-shadow: 0 0 0 3px rgba(56,189,248,0.08);
+    }
+
+    .btn {
+      height: 46px;
+      border: none;
+      border-radius: 14px;
+      color: #061018;
+      background: linear-gradient(135deg, var(--cyan), var(--violet));
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 0 28px rgba(56,189,248,0.28);
+      letter-spacing: -0.01em;
+    }
+
+    .btn-secondary {
+      height: 38px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      color: var(--text);
+      background: rgba(255,255,255,0.04);
+      font-weight: 700;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .chip {
+      border: 1px solid rgba(255,255,255,0.09);
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .chip.on {
+      color: var(--cyan);
+      border-color: rgba(56,189,248,0.42);
+      background: rgba(56,189,248,0.09);
+    }
+
+    .main {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 18px;
+    }
+
+    .ai-summary {
+      padding: 22px;
+      min-height: 210px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ai-summary::after {
+      content: "";
+      position: absolute;
+      width: 360px;
+      height: 360px;
+      right: -140px;
+      top: -140px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(56,189,248,0.20), transparent 64%);
+    }
+
+    .ai-kicker {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--cyan);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      font-weight: 900;
+    }
+
+    .headline {
+      margin: 16px 0 8px;
+      font-size: 34px;
+      letter-spacing: -0.05em;
+      line-height: 1.04;
+      max-width: 660px;
+    }
+
+    .headline span {
+      color: var(--cyan);
+      text-shadow: 0 0 20px rgba(56,189,248,0.25);
+    }
+
+    .ai-copy {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+      max-width: 650px;
+    }
+
+    .regime {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+    }
+
+    .pill.green { color: var(--green); border-color: rgba(34,197,94,0.35); background: rgba(34,197,94,0.08); }
+    .pill.cyan { color: var(--cyan); border-color: rgba(56,189,248,0.35); background: rgba(56,189,248,0.08); }
+    .pill.violet { color: var(--violet); border-color: rgba(167,139,250,0.35); background: rgba(167,139,250,0.08); }
+
+    .insight {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .insight-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .confidence {
+      font-size: 38px;
+      line-height: 1;
+      font-weight: 900;
+      color: var(--cyan);
+      letter-spacing: -0.05em;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .confidence small {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .reason-list {
+      display: grid;
+      gap: 9px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .reason {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding-bottom: 7px;
+    }
+
+    .reason strong {
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+
+    .stat-card {
+      padding: 16px;
+      min-height: 112px;
+    }
+
+    .stat-card .label {
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .stat-card .num {
+      margin-top: 10px;
+      font-size: 34px;
+      font-weight: 900;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: -0.05em;
+    }
+
+    .num.ready { color: var(--green); }
+    .num.watch { color: var(--cyan); }
+    .num.setup { color: var(--violet); }
+    .num.hold { color: var(--yellow); }
+    .num.skip { color: var(--muted); }
+
+    .mini {
+      margin-top: 7px;
+      color: var(--muted2);
+      font-size: 11px;
+    }
+
+    .table-wrap {
+      overflow: hidden;
+    }
+
+    .table-head {
+      height: 48px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .table-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .table-title strong {
+      color: var(--text);
+      font-size: 14px;
+      letter-spacing: 0;
+      text-transform: none;
+      margin-left: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    th {
+      text-align: left;
+      padding: 11px 14px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    td {
+      padding: 13px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      color: var(--text);
+      vertical-align: middle;
+    }
+
+    tr.ready { background: rgba(34,197,94,0.045); }
+    tr.watch { background: rgba(56,189,248,0.035); }
+    tr.setup { background: rgba(167,139,250,0.030); }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .symbol {
+      font-weight: 900;
+      font-size: 13px;
+    }
+
+    .sub {
+      color: var(--muted2);
+      font-size: 10px;
+      margin-top: 3px;
+    }
+
+    .verdict {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 900;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .verdict.ready { color: var(--green); border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.09); }
+    .verdict.watch { color: var(--cyan); border-color: rgba(56,189,248,0.4); background: rgba(56,189,248,0.09); }
+    .verdict.setup { color: var(--violet); border-color: rgba(167,139,250,0.4); background: rgba(167,139,250,0.09); }
+
+    .score {
+      display: inline-flex;
+      min-width: 46px;
+      justify-content: flex-end;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-weight: 900;
+    }
+
+    .green { color: var(--green); }
+    .cyan { color: var(--cyan); }
+    .violet { color: var(--violet); }
+    .yellow { color: var(--yellow); }
+    .red { color: var(--red); }
+    .muted { color: var(--muted); }
+
+    .explain {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .explain-card {
+      padding: 18px;
+    }
+
+    .ai-text {
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 13px;
+    }
+
+    .ai-text strong {
+      color: var(--text);
+    }
+
+    @media (max-width: 980px) {
+      .layout, .hero, .explain {
+        grid-template-columns: 1fr;
+      }
+      .cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .topbar {
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">AI</div>
+        <div>
+          <div class="brand-title">VCP<span>•AI</span></div>
+          <div class="brand-sub">Quant Signal Engine</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <button class="active">🎯 Master</button>
+        <button>VCP</button>
+        <button>RVOL</button>
+        <button>Trend Template</button>
+        <button>📖 How to Use</button>
+      </nav>
+
+      <div class="status">
+        <span class="pulse"></span>
+        <span>AI MODE: LIVE</span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="panel side">
+        <div>
+          <div class="eyebrow">Scan Configuration</div>
+          <h2 style="margin:8px 0 4px;font-size:19px;letter-spacing:-.03em;">Master Screener</h2>
+          <div style="color:var(--muted);font-size:12px;line-height:1.5;">Trend + VCP + RVOL fused into one trade verdict.</div>
+        </div>
+
+        <div class="field">
+          <span class="eyebrow">Universe</span>
+          <select class="select">
+            <option>Nifty 200 · 200 stocks</option>
+            <option>Nifty 500 · 500 stocks</option>
+            <option>All Stocks · 4,415 stocks</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <span class="eyebrow">Benchmark</span>
+          <select class="select">
+            <option>Nifty 50 (^NSEI)</option>
+            <option>Bank Nifty (^NSEBANK)</option>
+            <option>Nifty IT (^CNXIT)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <span class="eyebrow">As-of date</span>
+          <input class="input" type="date" />
+        </div>
+
+        <div class="field">
+          <span class="eyebrow">AI Model Preset</span>
+          <div class="chip-row">
+            <span class="chip">Conservative</span>
+            <span class="chip on">Balanced</span>
+            <span class="chip">Aggressive</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="eyebrow">Verdicts</span>
+          <div class="chip-row">
+            <span class="chip on">✅ Ready 04</span>
+            <span class="chip on">👀 Watch 12</span>
+            <span class="chip on">⚙ Setup 31</span>
+            <span class="chip">⏸ Hold 06</span>
+            <span class="chip">❌ Skip 147</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="eyebrow">Ready Conditions</span>
+          <div style="display:grid;gap:10px;">
+            <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:12px;"><span>Ready RVOL ≥</span><strong class="mono cyan">1.5x</strong></div>
+            <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:12px;"><span>Watch RVOL ≥</span><strong class="mono violet">1.0x</strong></div>
+            <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:12px;"><span>Strong Start</span><strong class="mono green">Optional</strong></div>
+          </div>
+        </div>
+
+        <button class="btn">▶ Run AI Master Scan</button>
+        <button class="btn-secondary">Download CSV</button>
+      </aside>
+
+      <main class="main">
+        <section class="hero">
+          <div class="panel ai-summary">
+            <div class="ai-kicker">✦ Neural Market Readout</div>
+            <h1 class="headline">
+              AI says the market is <span>selectively risk-on</span>.
+            </h1>
+            <p class="ai-copy">
+              Stage-2 breadth is expanding while only a handful of names show breakout-level volume.
+              Prioritise READY and WATCHLIST rows; avoid Stage 3/4 even if VCP scores look attractive.
+            </p>
+
+            <div class="regime">
+              <span class="pill green">● Regime: Risk-On</span>
+              <span class="pill cyan">Nifty 6M: +7.42%</span>
+              <span class="pill violet">Scan: Nifty 200</span>
+              <span class="pill">Timeframe: 1D</span>
+            </div>
+          </div>
+
+          <aside class="panel insight">
+            <div class="insight-header">
+              <div>
+                <div class="eyebrow">AI Confidence</div>
+                <div style="font-weight:800;margin-top:5px;">Signal Quality</div>
+              </div>
+              <div class="confidence">78<small>%</small></div>
+            </div>
+
+            <div class="reason-list">
+              <div class="reason"><span>Stage-2 breadth</span><strong class="green">37 / 200</strong></div>
+              <div class="reason"><span>READY candidates</span><strong class="green">04</strong></div>
+              <div class="reason"><span>Avg READY RVOL</span><strong class="cyan">2.14x</strong></div>
+              <div class="reason"><span>Market risk</span><strong class="yellow">Moderate</strong></div>
+            </div>
+          </aside>
+        </section>
+
+        <section class="cards">
+          <div class="panel stat-card">
+            <div class="label">Ready</div>
+            <div class="num ready">04</div>
+            <div class="mini">All systems aligned</div>
+          </div>
+          <div class="panel stat-card">
+            <div class="label">Watchlist</div>
+            <div class="num watch">12</div>
+            <div class="mini">Wait for volume</div>
+          </div>
+          <div class="panel stat-card">
+            <div class="label">Setup</div>
+            <div class="num setup">31</div>
+            <div class="mini">Base forming</div>
+          </div>
+          <div class="panel stat-card">
+            <div class="label">Hold Off</div>
+            <div class="num hold">06</div>
+            <div class="mini">Topping behaviour</div>
+          </div>
+          <div class="panel stat-card">
+            <div class="label">Skip</div>
+            <div class="num skip">147</div>
+            <div class="mini">No edge today</div>
+          </div>
+        </section>
+
+        <section class="panel table-wrap">
+          <div class="table-head">
+            <div class="table-title">AI Verdict Table <strong>Showing 47 / 200</strong></div>
+            <div class="pill cyan">Sorted by AI verdict</div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Verdict</th>
+                <th>Symbol</th>
+                <th>Stage</th>
+                <th>Trend</th>
+                <th>VCP</th>
+                <th>RVOL</th>
+                <th>Chg%</th>
+                <th>SS</th>
+                <th>RS</th>
+                <th>AI Confidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="ready">
+                <td class="mono muted">1</td>
+                <td><span class="verdict ready">✅ READY</span></td>
+                <td><div class="symbol">HAL</div><div class="sub">HAL.NS</div></td>
+                <td><span class="pill green">S2</span></td>
+                <td><span class="score green">8/8</span></td>
+                <td><span class="score green">84</span></td>
+                <td><span class="score green">2.41x</span></td>
+                <td><span class="green mono">+3.22%</span></td>
+                <td class="green">★</td>
+                <td><span class="green mono">+24.8%</span></td>
+                <td><span class="green mono">91%</span></td>
+              </tr>
+
+              <tr class="ready">
+                <td class="mono muted">2</td>
+                <td><span class="verdict ready">✅ READY</span></td>
+                <td><div class="symbol">BEL</div><div class="sub">BEL.NS</div></td>
+                <td><span class="pill green">S2</span></td>
+                <td><span class="score green">8/8</span></td>
+                <td><span class="score green">81</span></td>
+                <td><span class="score green">2.02x</span></td>
+                <td><span class="green mono">+2.14%</span></td>
+                <td class="green">★</td>
+                <td><span class="green mono">+19.2%</span></td>
+                <td><span class="green mono">86%</span></td>
+              </tr>
+
+              <tr class="watch">
+                <td class="mono muted">3</td>
+                <td><span class="verdict watch">👀 WATCH</span></td>
+                <td><div class="symbol">KEI</div><div class="sub">KEI.NS</div></td>
+                <td><span class="pill green">S2</span></td>
+                <td><span class="score green">7/8</span></td>
+                <td><span class="score yellow">72</span></td>
+                <td><span class="score cyan">1.18x</span></td>
+                <td><span class="yellow mono">+0.84%</span></td>
+                <td class="muted">·</td>
+                <td><span class="green mono">+13.9%</span></td>
+                <td><span class="cyan mono">72%</span></td>
+              </tr>
+
+              <tr class="setup">
+                <td class="mono muted">4</td>
+                <td><span class="verdict setup">⚙ SETUP</span></td>
+                <td><div class="symbol">TATA POWER</div><div class="sub">TATAPOWER.NS</div></td>
+                <td><span class="pill green">S2</span></td>
+                <td><span class="score yellow">6/8</span></td>
+                <td><span class="score yellow">61</span></td>
+                <td><span class="score muted">0.82x</span></td>
+                <td><span class="muted mono">+0.12%</span></td>
+                <td class="muted">·</td>
+                <td><span class="green mono">+8.7%</span></td>
+                <td><span class="violet mono">58%</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="explain">
+          <div class="panel explain-card">
+            <div class="eyebrow">AI Explanation · HAL</div>
+            <p class="ai-text">
+              <strong>HAL is classified READY</strong> because it is in Stage 2, passes 8/8
+              Trend Template rules, has a strong VCP score, and shows breakout-level RVOL.
+              Entry is valid only above pivot with a stop below the breakout-day low.
+            </p>
+          </div>
+          <div class="panel explain-card">
+            <div class="eyebrow">Suggested trade checklist</div>
+            <p class="ai-text">
+              Confirm price is above pivot, RVOL remains above 1.5x, and there is no immediate
+              failed breakout candle. Risk max 1% of account. Trail partial position with 21 EMA.
+            </p>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

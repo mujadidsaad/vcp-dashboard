@@ -60,11 +60,11 @@ const PRESETS: Record<MasterPreset, Partial<MasterConfig>> = {
 };
 
 const VERDICT_META: Record<MasterVerdict, { label: string; className: string; icon: string }> = {
-  'READY TO TRADE': { label: 'READY',    icon: '✅', className: 'text-good     border-good/40     bg-good/10' },
-  'WATCHLIST':      { label: 'WATCH',    icon: '👀', className: 'text-info     border-info/40     bg-info/10' },
-  'SETUP FORMING':  { label: 'SETUP',    icon: '⚙️', className: 'text-accent   border-accent/40   bg-accent/10' },
-  'HOLD OFF':       { label: 'HOLD',     icon: '⏸️', className: 'text-warn     border-warn/40     bg-warn/10' },
-  'SKIP':           { label: 'SKIP',     icon: '❌', className: 'text-white/60 border-white/20    bg-white/[0.03]' },
+  'READY TO TRADE': { label: 'READY',    icon: '', className: 'text-good     border-good/40     bg-good/10' },
+  'WATCHLIST':      { label: 'WATCH',    icon: '', className: 'text-info     border-info/40     bg-info/10' },
+  'SETUP FORMING':  { label: 'SETUP',    icon: '', className: 'text-accent   border-accent/40   bg-accent/10' },
+  'HOLD OFF':       { label: 'HOLD',     icon: '', className: 'text-warn     border-warn/40     bg-warn/10' },
+  'SKIP':           { label: 'SKIP',     icon: '', className: 'text-white/60 border-white/20    bg-white/[0.03]' },
 };
 
 function formatAgo(ms: number): string {
@@ -142,7 +142,7 @@ export default function MasterControls(p: Props) {
         <div>
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-            <div className="text-xs text-white/70 font-medium">🎯  Master Screener — Trend + VCP + RVOL fused</div>
+            <div className="text-xs text-white/70 font-medium">Master Screener — Trend + VCP + RVOL fused</div>
             <span
               className="ml-2 px-2 py-0.5 rounded-md text-[10px] font-semibold border border-info/40 bg-info/10 text-info uppercase tracking-[0.14em] cursor-help"
               title="Master always runs on daily bars. Trend Template (SMA50/150/200, 52-week range) and RVOL (20-day volume average) are only meaningful on daily data. Use the VCP tab if you need intraday timeframes."
@@ -179,7 +179,7 @@ export default function MasterControls(p: Props) {
               disabled={!p.totalStocks}
               className="px-4 h-9 rounded-md text-[12px] font-semibold bg-accent text-black hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed shadow-glow"
             >
-              ▶  Run Master Screener
+              Run Master Screener
             </button>
           )}
         </div>
@@ -275,7 +275,7 @@ export default function MasterControls(p: Props) {
             onChange={e => p.onCfg({ ...c, requireStrongStart: e.target.checked, preset: 'Custom' })}
             className="accent-accent w-3.5 h-3.5"
           />
-          Require ★ Strong Start for READY
+          Require * Strong Start for READY
         </label>
       </div>
 

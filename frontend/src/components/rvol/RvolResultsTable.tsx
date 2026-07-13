@@ -95,7 +95,7 @@ export default function RvolResultsTable({ results, cfg }: Props) {
         </div>
         {cfg.strongStartOnly && (
           <div className="text-white/40 text-xs mt-2">
-            Try un-checking <em>Only ★ rows</em>.
+            Try un-checking <em>Only * rows</em>.
           </div>
         )}
       </div>
@@ -181,7 +181,7 @@ export default function RvolResultsTable({ results, cfg }: Props) {
                     {Number.isFinite(r.chgPct) ? `${r.chgPct >= 0 ? '+' : ''}${r.chgPct.toFixed(2)}%` : '–'}
                   </td>
                   <td className="px-3 py-2 text-center">
-                    {r.strongStart ? <span className="text-good text-[14px] leading-none">★</span> : <span className="text-white/20">·</span>}
+                    {r.strongStart ? <span className="text-good text-[14px] leading-none">*</span> : <span className="text-white/20">·</span>}
                   </td>
                   <td className="px-3 py-2 text-right text-white/85 stat-num">{fmtPrice(r.close)}</td>
                   <td className="px-3 py-2 text-right text-white/60 stat-num">{fmtPrice(r.prevClose)}</td>

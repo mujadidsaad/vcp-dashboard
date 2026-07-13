@@ -53,7 +53,7 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
     <main className="flex-1 space-y-6 max-w-[900px] mx-auto">
       {/* Hero */}
       <div className="panel p-8 space-y-4 text-center">
-        <div className="text-4xl">📖</div>
+        <div className="text-4xl">Help</div>
         <h1 className="text-2xl md:text-3xl font-bold text-white">
           Welcome to <span className="text-accent">VCP•SCAN</span>
         </h1>
@@ -66,28 +66,28 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
           onClick={onGetStarted}
           className="mt-2 h-11 px-6 rounded-xl bg-accent text-white font-semibold text-sm shadow-glow hover:brightness-110 inline-flex items-center gap-2"
         >
-          🎯  {fromNav ? 'Back to the Master screener' : 'Take me to the Master screener'}
+          {fromNav ? 'Back to the Master screener' : 'Take me to the Master screener'}
         </button>
       </div>
 
       {/* Master */}
-      <Section icon="🎯" title="Master Screener" color="bg-accent/20 text-accent">
+      <Section icon="M" title="Master Screener" color="bg-accent/20 text-accent">
         <p>
           Runs all three screeners against the same daily bars and gives you
           <strong className="text-white"> one verdict per stock</strong>:
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
           <div className="rounded-md border border-good/40 bg-good/10 px-3 py-2 text-good">
-            ✅ <strong>READY TO TRADE</strong> — everything aligned, breakout live
+            <strong>READY TO TRADE</strong> — everything aligned, breakout live
           </div>
           <div className="rounded-md border border-info/40 bg-info/10 px-3 py-2 text-info">
-            👀 <strong>WATCHLIST</strong> — setup near, waiting on volume
+            <strong>WATCHLIST</strong> — setup near, waiting on volume
           </div>
           <div className="rounded-md border border-accent/40 bg-accent/10 px-3 py-2 text-accent">
-            ⚙️ <strong>SETUP FORMING</strong> — base building, not yet actionable
+            <strong>SETUP FORMING</strong> — base building, not yet actionable
           </div>
           <div className="rounded-md border border-warn/40 bg-warn/10 px-3 py-2 text-warn">
-            ⏸️ <strong>HOLD OFF</strong> — Stage 3 (topping), skip
+            <strong>HOLD OFF</strong> — Stage 3 (topping), skip
           </div>
         </div>
         <p className="text-white/50 mt-3">
@@ -97,7 +97,7 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
       </Section>
 
       {/* Trend Template */}
-      <Section icon="📈" title="Trend Template" color="bg-info/20 text-info">
+      <Section icon="TT" title="Trend Template" color="bg-info/20 text-info">
         <p>
           Mark Minervini's 8-rule uptrend check + Stan Weinstein's 4 stages of a
           market cycle. Tells you which stocks are in a{' '}
@@ -120,7 +120,7 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
       </Section>
 
       {/* VCP */}
-      <Section icon="🔻" title="VCP Screener" color="bg-purple-500/20 text-purple-300">
+      <Section icon="VCP" title="VCP Screener" color="bg-purple-500/20 text-purple-300">
         <p>
           <strong className="text-white">Volatility Contraction Pattern</strong> — Minervini's
           entry setup. Finds stocks forming tight, staircase-style bases with volume drying up,
@@ -148,7 +148,7 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
       </Section>
 
       {/* RVOL */}
-      <Section icon="⚡" title="RVOL Screener" color="bg-warn/20 text-warn">
+      <Section icon="RVOL" title="RVOL Screener" color="bg-warn/20 text-warn">
         <p>
           <strong className="text-white">Relative Volume</strong> — today's volume vs the 20-day average.
           Real breakouts require buyers showing up in size. This is your{' '}
@@ -161,15 +161,15 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
           <div>RVOL &gt; 2.0x → high conviction — <span className="text-good">strong buy signal</span></div>
         </div>
         <p className="text-white/50 mt-3">
-          Look for <span className="text-good">★ Strong Start</span> — open above prev close AND day-low held prev close × 0.995. No morning weakness = clean breakout.
+          Look for <span className="text-good">* Strong Start</span> — open above prev close AND day-low held prev close × 0.995. No morning weakness = clean breakout.
         </p>
       </Section>
 
       {/* The trade rules */}
-      <Section icon="💼" title="How to actually place a trade" color="bg-good/20 text-good">
+      <Section icon="Trade" title="How to actually place a trade" color="bg-good/20 text-good">
         <ol className="list-decimal list-inside space-y-2 text-white/80">
-          <li>Run the <strong className="text-accent">🎯 Master</strong> screener on <strong>Nifty 200</strong>.</li>
-          <li>Only trade <strong className="text-good">✅ READY</strong> and <strong className="text-info">👀 WATCH</strong> verdicts. Ignore the rest.</li>
+          <li>Run the <strong className="text-accent">Master</strong> screener on <strong>Nifty 200</strong>.</li>
+          <li>Only trade <strong className="text-good">READY</strong> and <strong className="text-info">WATCH</strong> verdicts. Ignore the rest.</li>
           <li>
             Pick a stock. <strong>Pivot</strong> = highest high of the last contraction.
             <br />Alert at pivot. Enter <em>above</em> the pivot on a green candle.
@@ -177,7 +177,7 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
           <li>
             Confirm entry with:
             <div className="ml-4 mt-1 text-[12px] text-white/60">
-              • RVOL ≥ 1.5x &nbsp;• Chg% &gt; +2% &nbsp;• Strong Start ★
+              • RVOL ≥ 1.5x &nbsp;• Chg% > +2% &nbsp;• Strong Start *
             </div>
           </li>
           <li>
@@ -197,7 +197,7 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
       </Section>
 
       {/* What NOT to do */}
-      <Section icon="🚫" title="What not to do" color="bg-bad/20 text-bad">
+      <Section icon="No" title="What not to do" color="bg-bad/20 text-bad">
         <ul className="list-disc list-inside space-y-1 text-white/70 text-[13px]">
           <li>Don't trade Stage 3 or Stage 4 stocks — even if the VCP looks perfect.</li>
           <li>Don't buy without checking RVOL on the day.</li>
@@ -209,7 +209,7 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
       </Section>
 
       {/* Daily routine */}
-      <Section icon="🕒" title="Daily 10-minute routine" color="bg-info/20 text-info">
+      <Section icon="Time" title="Daily 10-minute routine" color="bg-info/20 text-info">
         <ol className="list-decimal list-inside space-y-1 text-white/70 text-[13px]">
           <li>End of day: run <strong className="text-accent">Master</strong> on Nifty 500 — glance at the breadth (Stage-2 count).</li>
           <li>Sort by <strong>RS vs Bench</strong> — jot the top 10.</li>
@@ -223,7 +223,7 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
       <section className="panel p-6 border-2 border-warn/40 bg-warn/[0.06] space-y-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl bg-warn/25 text-warn">
-            ⚠️
+            !
           </div>
           <h2 className="text-lg font-semibold text-white">Important Disclaimer</h2>
         </div>
@@ -262,10 +262,10 @@ export default function HowToUse({ onGetStarted, fromNav }: Props) {
           onClick={onGetStarted}
           className="h-11 px-6 rounded-xl bg-accent text-white font-semibold text-sm shadow-glow hover:brightness-110 inline-flex items-center gap-2"
         >
-          🎯  {fromNav ? 'Back to the Master screener' : 'Got it — take me to the Master screener'}
+          {fromNav ? 'Back to the Master screener' : 'Got it — take me to the Master screener'}
         </button>
         <div className="text-[11px] text-white/40 mt-3">
-          You can revisit this page any time from the <strong className="text-white/60">📖 How to Use</strong> pill in the top nav.
+          You can revisit this page any time from the <strong className="text-white/60">How to Use</strong> pill in the top nav.
         </div>
       </div>
     </main>

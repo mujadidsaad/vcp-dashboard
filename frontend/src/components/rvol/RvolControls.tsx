@@ -138,7 +138,7 @@ export default function RvolControls(p: Props) {
               disabled={!p.totalStocks}
               className="px-4 h-9 rounded-md text-[12px] font-semibold bg-accent text-black hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed shadow-glow"
             >
-              ▶  Run RVOL Screener
+              Run RVOL Screener
             </button>
           )}
         </div>
@@ -216,7 +216,7 @@ export default function RvolControls(p: Props) {
               onChange={e => p.onCfg({ ...c, strongStartOnly: e.target.checked })}
               className="accent-accent w-3.5 h-3.5"
             />
-            <span>Only ★ rows</span>
+            <span>Only * rows</span>
           </label>
         </label>
       </div>

@@ -182,7 +182,7 @@ export default function TrendResultsTable({ results, cfg }: Props) {
                     return (
                       <td key={rule.key as string} className="px-1 py-2 text-center" title={rule.tip}>
                         {passed
-                          ? <span className="text-good text-[13px] leading-none">✓</span>
+                          ? <span className="text-good text-[13px] leading-none">*</span>
                           : <span className="text-white/20 text-[13px] leading-none">·</span>}
                       </td>
                     );

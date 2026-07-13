@@ -158,7 +158,7 @@ export default function TrendControls(p: Props) {
               disabled={!p.totalStocks}
               className="px-4 h-9 rounded-md text-[12px] font-semibold bg-accent text-black hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed shadow-glow"
             >
-              ▶  Run Trend Template
+              Run Trend Template
             </button>
           )}
         </div>
